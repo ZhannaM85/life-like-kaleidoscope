@@ -50,6 +50,7 @@ _Any order from here, but keep each epic its own reviewable unit of work. Sugges
 
 | # | Issue | Notes |
 |---|-------|-------|
+| [#18](https://github.com/ZhannaM85/life-kaleidoscope/issues/18) | feat: localization — Russian support | First in this tier deliberately: extracting strings from 3 screens is cheap, from 10 it's a slog. Includes a **curated** (not translated) Russian word pool |
 | [#5](https://github.com/ZhannaM85/life-kaleidoscope/issues/5) | Epic 4 — Memory entry CRUD & version history | Full form (RHF + Zod), detail view, version history view |
 | [#6](https://github.com/ZhannaM85/life-kaleidoscope/issues/6) | Epic 5 — Photos | IndexedDB blob storage; display in detail view — extends #5's detail view |
 | [#7](https://github.com/ZhannaM85/life-kaleidoscope/issues/7) | Epic 6 — Search | Across prompts, stories, people, places, tags |
