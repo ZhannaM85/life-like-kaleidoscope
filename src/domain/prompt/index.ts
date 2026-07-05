@@ -1,2 +1,2 @@
-// Domain: prompt — entity and repository interface implemented in Epic 1
-export {}
+export type { Prompt } from './prompt'
+export type { PromptRepository } from './repository'
