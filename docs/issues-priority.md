@@ -1,6 +1,6 @@
 # Issues Priority List
 
-Issues grouped by implementation tier. Work top-to-bottom within each tier; dependencies are noted where order matters within a tier. Ordering follows the sequencing in `PROJECT_BRIEF.md` §11.
+Issues grouped by implementation tier. Work top-to-bottom within each tier; dependencies are noted where order matters within a tier. Ordering follows the sequencing in `PROJECT_BRIEF.md` §11, with one deliberate deviation: data safety (export/import/persistent storage) is pulled up right after the first vertical slice, because IndexedDB is the only copy of the user's writing and a decades-long archive can't wait for backups until the end of Tier 5.
 
 ---
 
@@ -9,7 +9,7 @@ _Scaffolding, domain model, and persistence. Everything downstream depends on th
 
 | # | Issue | Notes |
 |---|-------|-------|
-| ~~[#1](https://github.com/ZhannaM85/life-kaleidoscope/issues/1)~~ | ~~Epic 0 — Project scaffolding & tooling~~ | Done ✓ — commit `ceacb8a`; issue still open on GitHub |
+| ~~[#1](https://github.com/ZhannaM85/life-kaleidoscope/issues/1)~~ | ~~Epic 0 — Project scaffolding & tooling~~ | Done ✓ — commit `ceacb8a` |
 | ~~[#2](https://github.com/ZhannaM85/life-kaleidoscope/issues/2)~~ | ~~Epic 1 — Domain model & persistence layer~~ | Done ✓ — commits `287a26a`, `2203d61`; 20 unit tests; Phase 1 checkpoint summary delivered |
 
 ---
@@ -20,7 +20,7 @@ _Shared primitives and routing skeleton before any real feature screen._
 | # | Issue | Notes |
 |---|-------|-------|
 | [#3](https://github.com/ZhannaM85/life-kaleidoscope/issues/3) | Epic 2 — Design system & shared UI | Theme tokens (§8), shared primitives, app shell + routing skeleton (§6) |
-| [#14](https://github.com/ZhannaM85/life-kaleidoscope/issues/14) | bug: header nav unusable at mobile widths | Collapse nav below a breakpoint (menu button or bottom tab bar); fix with or right after #3 — don't defer to #12 |
+| [#14](https://github.com/ZhannaM85/life-kaleidoscope/issues/14) | bug: header nav unusable at mobile widths | Collapse nav below a breakpoint (menu button or bottom tab bar); fix with #3 — don't defer to #12 |
 | [#15](https://github.com/ZhannaM85/life-kaleidoscope/issues/15) | chore: replace default Vite favicon | Generate a calm, notebook-style favicon (no literal kaleidoscope imagery); land with #3's visual identity work |
 
 ---
@@ -34,7 +34,18 @@ _Prompt → write → save → appears in the memories list. Proves the whole st
 
 ---
 
-## Tier 4 — Core features
+## Tier 4 — Data safety
+_Pulled up from the end of the queue: once real writing exists (Tier 3), users need a way out of the browser and back in before anything else._
+
+| # | Issue | Notes |
+|---|-------|-------|
+| [#17](https://github.com/ZhannaM85/life-kaleidoscope/issues/17) | feat: persistent storage request + storage status | `navigator.storage.persist()` — tiny; eliminates silent eviction. Can land even earlier if convenient |
+| [#11](https://github.com/ZhannaM85/life-kaleidoscope/issues/11) | Epic 11 — Export | **JSON first** (it's the backup format), Markdown next; PDF can trail into Tier 5 |
+| [#16](https://github.com/ZhannaM85/life-kaleidoscope/issues/16) | feat: JSON backup import/restore | Round-trips #11's JSON format incl. version histories and photos; depends on #11 |
+
+---
+
+## Tier 5 — Core features
 _Any order from here, but keep each epic its own reviewable unit of work. Suggested order below; dependencies noted._
 
 | # | Issue | Notes |
@@ -46,13 +57,12 @@ _Any order from here, but keep each epic its own reviewable unit of work. Sugges
 | [#9](https://github.com/ZhannaM85/life-kaleidoscope/issues/9) | Epic 8 — Memory graph (basic) | Data model + simple static render; rich explorer deferred |
 | [#10](https://github.com/ZhannaM85/life-kaleidoscope/issues/10) | Epic 9 — Annual reflection | Reveal last year's memory only after writing today's — depends on #4 |
 | [#13](https://github.com/ZhannaM85/life-kaleidoscope/issues/13) | Epic 10 — Random memory | "On this day N years ago" + random fallback |
-| [#11](https://github.com/ZhannaM85/life-kaleidoscope/issues/11) | Epic 11 — Export | Markdown, JSON, PDF |
 
 ---
 
-## Tier 5 — Quality pass
+## Tier 6 — Quality pass
 _Final sweep, but apply accessibility incrementally as each feature is built — don't defer it all here._
 
 | # | Issue | Notes |
 |---|-------|-------|
-| [#12](https://github.com/ZhannaM85/life-kaleidoscope/issues/12) | Epic 12 — Accessibility & responsive QA pass | Keyboard nav, WCAG AA contrast audit, responsive check |
+| [#12](https://github.com/ZhannaM85/life-kaleidoscope/issues/12) | Epic 12 — Accessibility & responsive QA pass | Keyboard nav, WCAG AA contrast audit, responsive check; PDF export (#11 leftover) fits here too |
