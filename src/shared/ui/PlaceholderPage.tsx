@@ -3,7 +3,10 @@ interface PlaceholderPageProps {
   description?: string
 }
 
-export function PlaceholderPage({ title, description = 'Coming in a future epic.' }: PlaceholderPageProps) {
+export function PlaceholderPage({
+  title,
+  description = 'Coming in a future epic.',
+}: PlaceholderPageProps) {
   return (
     <div className="flex flex-col items-center justify-center py-24 text-center">
       <h1 className="text-2xl font-semibold text-foreground mb-3">{title}</h1>
