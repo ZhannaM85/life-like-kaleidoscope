@@ -2,6 +2,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@theme {
+  /* "Beautiful notebook": humanist serif for prose, warm sans for UI chrome.
+     System stacks only — no webfont downloads (privacy-first, local-first). */
+  --font-serif: 'Charter', 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif;
+  --font-sans: 'Segoe UI', 'Gill Sans', 'Gill Sans MT', Seravek, Calibri, system-ui, sans-serif;
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -63,12 +70,7 @@
   body {
     background-color: var(--background);
     color: var(--foreground);
-    font-family:
-      system-ui,
-      -apple-system,
-      'Segoe UI',
-      Roboto,
-      sans-serif;
+    font-family: var(--font-serif);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     margin: 0;
