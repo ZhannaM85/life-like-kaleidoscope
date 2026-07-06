@@ -51,12 +51,12 @@ _Any order from here, but keep each epic its own reviewable unit of work. Sugges
 
 | # | Issue | Notes |
 |---|-------|-------|
-| [#18](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/18) | feat: localization — Russian support | First in this tier deliberately: extracting strings from 3 screens is cheap, from 10 it's a slog. Includes a **curated** (not translated) Russian word pool |
-| [#25](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/25) | feat: approximate date (age/year) on Today quick entry | Small Today-screen addition; `approxAge`/`approxYear` exist in the domain since #2. If #5 lands first, reuse its field components |
-| [#26](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/26) | feat: memory mood — quiet word chips | happy / bittersweet / neutral / sad, optional, no color coding (design agreed 2026-07-06). Adds `mood?` to the domain; #5 and #18 should pick it up |
+| [#5](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/5) | Epic 4 — Memory entry CRUD & version history | Pulled to the top of the tier (2026-07-06) so the small Today-screen features can build on its form components. Full form (RHF + Zod), detail view, version history view |
+| [#18](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/18) | feat: localization — Russian support | Reordered after #5 (2026-07-06): extraction gets a bit bigger, but #25–#28 then ship localized from day one. Includes a **curated** (not translated) Russian word pool |
+| [#25](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/25) | feat: approximate date (age/year) on Today quick entry | Small Today-screen addition; `approxAge`/`approxYear` exist in the domain since #2. Reuses #5's field components |
+| [#26](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/26) | feat: memory mood — quiet word chips | happy / bittersweet / neutral / sad, optional, no color coding (design agreed 2026-07-06). Adds `mood?` to the domain, chips on Today quick entry and #5's full form |
 | [#27](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/27) | feat: skip today's word / never show a word again | Quiet unlimited skip + reversible blocklist ("Hidden words" in Settings). Design agreed 2026-07-06; per-language blocklist caveat noted for #18 |
 | [#28](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/28) | feat: user-added prompt words ("Your words") | Custom words join the pool as equal citizens; curated pool stays unlisted to preserve the daily surprise. Same Settings surface as #27; word lists must round-trip in backups (#11/#16) |
-| [#5](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/5) | Epic 4 — Memory entry CRUD & version history | Full form (RHF + Zod), detail view, version history view — incl. approx date + mood fields (#25/#26) |
 | [#6](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/6) | Epic 5 — Photos | IndexedDB blob storage; display in detail view — extends #5's detail view |
 | [#7](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/7) | Epic 6 — Search | Across prompts, stories, people, places, tags |
 | [#8](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/8) | Epic 7 — Timeline | Ordered by approx age/year; graceful handling of undated memories |
