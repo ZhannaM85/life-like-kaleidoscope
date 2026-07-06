@@ -1,32 +1,68 @@
-# React + TypeScript + Vite
+# Life Like Kaleidoscope
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+*One word a day. One small memory. A lifetime of them.*
 
-Currently, two official plugins are available:
+**Live app:** https://zhannam85.github.io/life-like-kaleidoscope/
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Life Like Kaleidoscope (**LLK**) is a calm, local-first daily memory journal.
+Traditional journals answer *"what happened today?"* — this app answers
+*"who am I, across a whole life?"* Every day you get one carefully chosen
+single-word prompt (*Bicycle*, *Rain*, *Grandmother*, *Kitchen*) and write one
+small memory it brings back. Over years, those fragments accumulate into a
+searchable, connected record of a life — many small pieces forming a picture,
+which is the only sense in which it is a kaleidoscope. The UI itself stays
+quiet: warm paper tones, serif type, no bright colors.
 
-## React Compiler
+## What it deliberately is not
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+These are permanent product stances, not v1 limitations:
 
-## Expanding the Oxlint configuration
+- **No AI-generated content.** The app never writes, rewrites, or summarizes
+  your memories.
+- **No social features.** No likes, comments, followers, or feeds.
+- **No gamification.** No streaks, badges, or guilt — missing a day costs
+  nothing.
+- **Privacy-first.** Everything lives in your browser's IndexedDB. No backend,
+  no accounts, no analytics, no telemetry.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## How it works
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+- A deterministic daily prompt picked from a curated word pool, with a
+  no-repeat window so words don't recur too soon.
+- Memories are written against the prompt; dates are always optional —
+  *"I was maybe 8, sometime in the 90s"* is a first-class answer.
+- Every edit creates a new immutable version; history is never overwritten.
+- People, places, and tags are first-class entities, forming the graph that
+  connects memories to each other.
+- Because all data is local, export/backup (JSON, Markdown) is a core feature,
+  not an afterthought.
+
+## Status
+
+Early development. The daily-prompt flow (prompt → write → save → appears in
+Memories) works end to end; memory editing, search, timeline, the memory
+graph, and export are in progress. See
+[docs/issues-priority.md](docs/issues-priority.md) for the current roadmap and
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the codebase is put
+together.
+
+## Tech
+
+React 19 + TypeScript (strict) + Vite, React Router, Zustand for UI state,
+React Hook Form + Zod, Tailwind CSS, and IndexedDB via Dexie — accessed only
+through repository interfaces defined in the domain layer, so a future backend
+is one new repository implementation away. Deployed to GitHub Pages by a
+workflow on every push to `master`.
+
+## Development
+
+```bash
+npm install
+npm run dev        # local dev server
+npm test           # vitest run
+npm run build      # type-check + production build
+npm run lint       # oxlint
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+The original product brief that bootstrapped the project lives in
+[PROJECT_BRIEF.md](PROJECT_BRIEF.md).
