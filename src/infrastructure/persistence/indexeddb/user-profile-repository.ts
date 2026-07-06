@@ -1,10 +1,10 @@
 import type { UserProfile, UserProfileRepository } from '@/domain/user'
-import type { LifeKaleidoscopeDb } from './db'
+import type { LifeLikeKaleidoscopeDb } from './db'
 
 export class IndexedDbUserProfileRepository implements UserProfileRepository {
-  private readonly db: LifeKaleidoscopeDb
+  private readonly db: LifeLikeKaleidoscopeDb
 
-  constructor(db: LifeKaleidoscopeDb) {
+  constructor(db: LifeLikeKaleidoscopeDb) {
     this.db = db
   }
 

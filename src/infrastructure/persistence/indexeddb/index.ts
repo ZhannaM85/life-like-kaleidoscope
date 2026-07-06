@@ -1,6 +1,6 @@
 // IndexedDB / Dexie repository implementations.
 // Nothing outside this folder should import Dexie directly.
-import { LifeKaleidoscopeDb } from './db'
+import { LifeLikeKaleidoscopeDb } from './db'
 import { IndexedDbMemoryRepository } from './memory-repository'
 import { IndexedDbPhotoRepository } from './photo-repository'
 import { IndexedDbPromptRepository } from './prompt-repository'
@@ -15,7 +15,7 @@ import type { PlaceRepository } from '@/domain/place'
 import type { TagRepository } from '@/domain/tag'
 import type { UserProfileRepository } from '@/domain/user'
 
-export { LifeKaleidoscopeDb } from './db'
+export { LifeLikeKaleidoscopeDb } from './db'
 export { IndexedDbMemoryRepository } from './memory-repository'
 export { IndexedDbPhotoRepository } from './photo-repository'
 export { IndexedDbPromptRepository } from './prompt-repository'
@@ -41,7 +41,7 @@ export interface Repositories {
  * implementations — no store or feature code changes.
  */
 export function createIndexedDbRepositories(dbName?: string): Repositories {
-  const db = new LifeKaleidoscopeDb(dbName)
+  const db = new LifeLikeKaleidoscopeDb(dbName)
   return {
     memories: new IndexedDbMemoryRepository(db),
     photos: new IndexedDbPhotoRepository(db),

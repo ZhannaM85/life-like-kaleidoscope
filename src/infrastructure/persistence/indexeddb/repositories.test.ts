@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createMemory, editMemory, type VersioningDeps } from '@/domain/memory'
-import { LifeKaleidoscopeDb } from './db'
+import { LifeLikeKaleidoscopeDb } from './db'
 import { createIndexedDbRepositories, type Repositories } from './index'
 
 let dbCounter = 0
@@ -28,7 +28,7 @@ beforeEach(() => {
 })
 
 afterEach(async () => {
-  await new LifeKaleidoscopeDb(dbName).delete()
+  await new LifeLikeKaleidoscopeDb(dbName).delete()
 })
 
 describe('IndexedDbMemoryRepository', () => {

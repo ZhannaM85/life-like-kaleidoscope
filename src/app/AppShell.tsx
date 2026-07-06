@@ -25,7 +25,7 @@ export function AppShell() {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
           <span className="text-lg font-medium tracking-wide text-foreground whitespace-nowrap">
-            Life Kaleidoscope
+            Life Like Kaleidoscope
           </span>
           {/* Desktop nav — hidden on phones, where the bottom tab bar takes over (#14) */}
           <nav aria-label="Main navigation" className="hidden sm:block">

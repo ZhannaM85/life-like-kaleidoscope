@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import {
   createIndexedDbRepositories,
-  LifeKaleidoscopeDb,
+  LifeLikeKaleidoscopeDb,
 } from '@/infrastructure/persistence/indexeddb'
 import { setRepositories, useDailyPromptStore, useMemoriesStore } from '@/stores'
 import { TodayPage } from './TodayPage'
@@ -29,7 +29,7 @@ beforeEach(() => {
 
 afterEach(async () => {
   setRepositories(null)
-  await new LifeKaleidoscopeDb(dbName).delete()
+  await new LifeLikeKaleidoscopeDb(dbName).delete()
 })
 
 describe('vertical slice: prompt → write → save → memories list', () => {

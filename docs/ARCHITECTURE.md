@@ -1,4 +1,4 @@
-# Life Kaleidoscope — Architecture
+# Life Like Kaleidoscope — Architecture
 
 This document is updated after each issue is completed. It explains what every file does, why it exists, and how the pieces connect.
 
@@ -8,7 +8,7 @@ Product context lives in `PROJECT_BRIEF.md`; the work queue lives in `docs/issue
 
 ## System Overview
 
-Life Kaleidoscope is a local-first daily memory journal: one single-word prompt per day, one small memory written about it, accumulated over years into a searchable, connected record of a life. Everything runs in the browser — no backend, no accounts, no telemetry. All data lives in the user's own IndexedDB.
+Life Like Kaleidoscope is a local-first daily memory journal: one single-word prompt per day, one small memory written about it, accumulated over years into a searchable, connected record of a life. Everything runs in the browser — no backend, no accounts, no telemetry. All data lives in the user's own IndexedDB.
 
 The codebase follows Clean Architecture layering with feature-based folders:
 
@@ -26,7 +26,7 @@ flowchart TD
         E["Repository INTERFACES<br/>MemoryRepository, ..."]
     end
     subgraph Infra ["infrastructure/persistence/indexeddb/  (only place Dexie exists)"]
-        F["LifeKaleidoscopeDb<br/>Dexie schema"]
+        F["LifeLikeKaleidoscopeDb<br/>Dexie schema"]
         G["IndexedDb*Repository<br/>implementations"]
     end
 
@@ -189,7 +189,7 @@ Key decision: `update()` inserts the version with Dexie's `add` (not `put`) insi
 | Export | Purpose |
 |--------|---------|
 | `Repositories` | Interface bundling all seven repository interfaces — what the app "sees". |
-| `createIndexedDbRepositories(dbName?)` | Builds one `LifeKaleidoscopeDb` and wires all seven implementations around it. A future remote backend replaces this one factory. |
+| `createIndexedDbRepositories(dbName?)` | Builds one `LifeLikeKaleidoscopeDb` and wires all seven implementations around it. A future remote backend replaces this one factory. |
 | Class re-exports | Individual repositories, mainly for tests. |
 
 ---
@@ -227,7 +227,7 @@ Zustand owns UI/session state only; persisted data always flows through the doma
 | `src/app/SettingsPage.tsx` (real since #17) | "Your data" card: storage protection status + space used from `getStorageStatus()`, in a calm, informational tone (no alarm styling). When persistence is not granted, a dismissible "gentle suggestion" card points at the Export page for occasional backups — dismissal remembered in `localStorage`, no nagging. |
 | `src/features/*/…Page.tsx` | One placeholder screen per remaining route, in their future feature homes. |
 
-`index.html` (updated in #15): title "Life Kaleidoscope", `theme-color` matching the paper background, and `public/favicon.svg` — a hand-drawn quiet notebook mark (ivory page, clay margin line, three trailing ink lines). Deliberately not literal kaleidoscope imagery (brief §2). The leftover bolt-logo `favicon.svg`/`icons.svg` from scaffolding were replaced/removed.
+`index.html` (updated in #15): title "Life Like Kaleidoscope", `theme-color` matching the paper background, and `public/favicon.svg` — a hand-drawn quiet notebook mark (ivory page, clay margin line, three trailing ink lines). Deliberately not literal kaleidoscope imagery (brief §2). The leftover bolt-logo `favicon.svg`/`icons.svg` from scaffolding were replaced/removed.
 
 ---
 

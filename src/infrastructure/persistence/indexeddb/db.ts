@@ -18,7 +18,7 @@ export interface PhotoBlobRow {
   type: string
 }
 
-export class LifeKaleidoscopeDb extends Dexie {
+export class LifeLikeKaleidoscopeDb extends Dexie {
   prompts!: Table<Prompt, string>
   memories!: Table<Memory, string>
   memoryVersions!: Table<MemoryVersion, string>
@@ -29,6 +29,9 @@ export class LifeKaleidoscopeDb extends Dexie {
   photoBlobs!: Table<PhotoBlobRow, string>
   userProfiles!: Table<UserProfile, string>
 
+  // The persisted database name predates the rename to "Life Like Kaleidoscope"
+  // and must stay 'life-kaleidoscope': changing it would open a fresh empty
+  // database and orphan every existing user's data.
   constructor(name = 'life-kaleidoscope') {
     super(name)
     this.version(1).stores({

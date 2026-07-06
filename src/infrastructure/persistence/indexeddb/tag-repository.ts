@@ -1,11 +1,11 @@
 import type { EntityId } from '@/domain/shared'
 import type { Tag, TagRepository } from '@/domain/tag'
-import type { LifeKaleidoscopeDb } from './db'
+import type { LifeLikeKaleidoscopeDb } from './db'
 
 export class IndexedDbTagRepository implements TagRepository {
-  private readonly db: LifeKaleidoscopeDb
+  private readonly db: LifeLikeKaleidoscopeDb
 
-  constructor(db: LifeKaleidoscopeDb) {
+  constructor(db: LifeLikeKaleidoscopeDb) {
     this.db = db
   }
 

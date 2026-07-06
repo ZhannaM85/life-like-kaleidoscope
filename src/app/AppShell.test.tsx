@@ -13,7 +13,7 @@ function renderShell() {
 describe('AppShell', () => {
   it('renders the app title and the outlet content', () => {
     renderShell()
-    expect(screen.getByText('Life Kaleidoscope')).toBeInTheDocument()
+    expect(screen.getByText('Life Like Kaleidoscope')).toBeInTheDocument()
     expect(screen.getByText('Today content')).toBeInTheDocument()
   })
 

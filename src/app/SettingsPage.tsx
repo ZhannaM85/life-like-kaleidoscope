@@ -15,6 +15,8 @@ import {
   type StorageStatus,
 } from '@/infrastructure/persistence/storage-persistence'
 
+// Key prefix predates the rename to "Life Like Kaleidoscope"; kept so existing
+// dismissals survive.
 const BACKUP_SUGGESTION_DISMISSED_KEY = 'life-kaleidoscope.backup-suggestion-dismissed'
 
 // localStorage can throw (privacy modes); a lost dismissal just means the

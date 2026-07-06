@@ -1,4 +1,4 @@
-# Life Kaleidoscope — Project Brief & Bootstrap Instructions for Claude Code
+# Life Like Kaleidoscope — Project Brief & Bootstrap Instructions for Claude Code
 
 ## How to use this document
 
@@ -9,7 +9,7 @@ its operating brief for the whole project, not just the first session.
 
 ## Configuration (edit before running)
 
-- `REPO_NAME`: `life-kaleidoscope`
+- `REPO_NAME`: `life-like-kaleidoscope`
 - `VISIBILITY`: `public` (recommended default for an early-stage product —
   change to `public` if you want it open source from day one)
 - `GITHUB_OWNER`: *(leave blank to create under your authenticated `gh` account)*
@@ -41,7 +41,7 @@ Never generate the entire application in a single pass. After each epic
 
 ## 1. Product vision
 
-**Life Kaleidoscope** is not a journaling app in the productivity-app sense.
+**Life Like Kaleidoscope** is not a journaling app in the productivity-app sense.
 Traditional journals answer "what happened today?" This app answers
 "who am I, across a whole life?" Every day, the user gets one carefully
 chosen single-word prompt (e.g. *Bicycle*, *Rain*, *Grandmother*, *Kitchen*)

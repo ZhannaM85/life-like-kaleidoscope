@@ -1,11 +1,11 @@
 import type { EntityId } from '@/domain/shared'
 import type { Prompt, PromptRepository } from '@/domain/prompt'
-import type { LifeKaleidoscopeDb } from './db'
+import type { LifeLikeKaleidoscopeDb } from './db'
 
 export class IndexedDbPromptRepository implements PromptRepository {
-  private readonly db: LifeKaleidoscopeDb
+  private readonly db: LifeLikeKaleidoscopeDb
 
-  constructor(db: LifeKaleidoscopeDb) {
+  constructor(db: LifeLikeKaleidoscopeDb) {
     this.db = db
   }
 

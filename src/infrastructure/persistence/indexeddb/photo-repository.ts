@@ -1,11 +1,11 @@
 import type { EntityId } from '@/domain/shared'
 import type { Photo, PhotoRepository } from '@/domain/memory'
-import type { LifeKaleidoscopeDb } from './db'
+import type { LifeLikeKaleidoscopeDb } from './db'
 
 export class IndexedDbPhotoRepository implements PhotoRepository {
-  private readonly db: LifeKaleidoscopeDb
+  private readonly db: LifeLikeKaleidoscopeDb
 
-  constructor(db: LifeKaleidoscopeDb) {
+  constructor(db: LifeLikeKaleidoscopeDb) {
     this.db = db
   }
 

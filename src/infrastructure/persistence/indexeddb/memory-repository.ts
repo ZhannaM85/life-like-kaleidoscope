@@ -1,11 +1,11 @@
 import type { EntityId } from '@/domain/shared'
 import type { Memory, MemoryRepository, MemoryVersion, MemoryWithVersion } from '@/domain/memory'
-import type { LifeKaleidoscopeDb } from './db'
+import type { LifeLikeKaleidoscopeDb } from './db'
 
 export class IndexedDbMemoryRepository implements MemoryRepository {
-  private readonly db: LifeKaleidoscopeDb
+  private readonly db: LifeLikeKaleidoscopeDb
 
-  constructor(db: LifeKaleidoscopeDb) {
+  constructor(db: LifeLikeKaleidoscopeDb) {
     this.db = db
   }
 
