@@ -53,6 +53,12 @@ export function TodayPage() {
           className="min-h-48"
         />
         <div className="flex items-center justify-end gap-4">
+          <Link
+            to="/memories/new"
+            className="font-sans text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
+          >
+            More to add? Open the full form
+          </Link>
           <Button onClick={() => void save()} disabled={status === 'saving' || !draft.trim()}>
             {status === 'saving' ? 'Saving…' : 'Keep this memory'}
           </Button>

@@ -1,7 +1,9 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { BookOpen } from 'lucide-react'
+import { BookOpen, PenLine } from 'lucide-react'
 import { useMemoriesStore } from '@/stores'
+import { cn } from '@/shared/lib/utils'
+import { buttonVariants } from '@/shared/ui/button'
 import { PageHeader } from '@/shared/ui/page-header'
 import { EmptyState } from '@/shared/ui/empty-state'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/ui/card'
@@ -53,7 +55,16 @@ export function MemoriesPage() {
 
   return (
     <div>
-      <PageHeader title="Memories" description="Everything you have kept, newest first." />
+      <PageHeader
+        title="Memories"
+        description="Everything you have kept, newest first."
+        action={
+          <Link to="/memories/new" className={cn(buttonVariants({ variant: 'outline' }))}>
+            <PenLine aria-hidden />
+            Write a memory
+          </Link>
+        }
+      />
       <ul className="m-0 flex list-none flex-col gap-4 p-0">
         {memories.map((memory) => {
           const word = promptsById[memory.promptId]?.word

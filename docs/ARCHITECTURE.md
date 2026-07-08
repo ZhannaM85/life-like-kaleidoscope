@@ -232,7 +232,15 @@ Zustand owns UI/session state only; persisted data always flows through the doma
 | File | Purpose |
 |------|---------|
 | `daily-prompt/TodayPage.tsx` (real since #4) | The heart of the app: date + today's word large and centered, a serif textarea ("A memory this word brings back"), and a single "Keep this memory" button (disabled while empty/saving — no error states for an empty page, per the no-guilt stance). Saved entries are echoed below with a link to the full list; writing more than once a day is allowed and unceremonious. |
-| `memory-entry/MemoriesPage.tsx` (real since #4) | Newest-first cards — word, written-on date, three-line story excerpt — each linking to `/memories/:id` (detail is Epic 4). Calm `EmptyState` pointing back to today's word when nothing exists. |
+| `memory-entry/MemoriesPage.tsx` (real since #4) | Newest-first cards — word, written-on date, three-line story excerpt — each linking to `/memories/:id`. Calm `EmptyState` pointing back to today's word when nothing exists; a "Write a memory" header action opens the full form (#5). |
+| `memory-entry/memory-form.ts` (added in #5) | The full form's logic half: `memoryFormSchema` (Zod — only the story is required; age/year just have to be plausible integers when given), `parseNameList` (comma-separated names → trimmed, case-insensitively deduped), `memoryFieldsFromValues` (raw strings → `MemoryDraft`/`MemoryEdit` shapes), and `resolveEntityIds`, which reuses existing people/places/tags by name (case-insensitive) and creates the rest — graph nodes stay stable across memories. |
+| `memory-entry/MemoryForm.tsx` (added in #5) | The shared form component (RHF + zodResolver) used by both the new and edit pages: title, story, approx age/year, and comma-separated people/places/tags, every field but the story optional ("an invitation, not a demand"). |
+| `memory-entry/memory-context.ts` (added in #5) | `loadMemoryContext(id)` — one load for everything the memory pages show: the memory plus its prompt word and people/place/tag display names resolved from ids. |
+| `memory-entry/MemoryNewPage.tsx` (added in #5) | `/memories/new` — the roomier sibling of the Today quick entry. Attaches the new memory to today's prompt through the daily-prompt store (so its StrictMode-safe guard keeps the day to one prompt), then navigates to the detail page. Reached from a Memories header action and a quiet link beside Today's save button. |
+| `memory-entry/MemoryDetailPage.tsx` (real since #5) | The full story with When/People/Places/Tags rows (shown only when present), edit action, version-history link, and delete behind a quiet inline confirmation ("Keep it" as the easy way out). Unknown ids get the calm "This memory isn't here" empty state. |
+| `memory-entry/MemoryEditPage.tsx` (real since #5) | Prefills `MemoryForm` from `loadMemoryContext`; saving goes through `editMemory` → `MemoryRepository.update`, appending a brand-new immutable `MemoryVersion` — never mutating in place. |
+| `version-history/VersionHistoryPage.tsx` (added in #5) | `/memories/:id/history` — read-only cards, newest first, each version's snapshot as written, the current one marked. Nothing on this page can change or remove anything, which is the point. |
+| `memory-entry/memory-form.test.ts` / `memory-entry/memory-crud.test.tsx` (added in #5) | Unit tests for the form logic (schema, name parsing, entity reuse) and a routed integration suite against fake-indexeddb: create through the full form → detail rows, story-required validation, edit → two versions in history with the old text kept, delete with confirmation removing the whole history, and not-found states. |
 | `daily-prompt/vertical-slice.test.tsx` | The end-to-end slice as a test: word appears → type → save → echoed on Today → listed on Memories, against real stores + fake-indexeddb. Also regression tests for the StrictMode double-load race and the duplicate-prompt healing path. |
 | `export/ExportPage.tsx` (real since #11) | Three calm cards — JSON backup (the lossless restore file), Markdown (readable, oldest first), PDF (opens the browser print dialog on the printable document; "Save as PDF" lives there). Collects a fresh `BackupFile` on each click via `getRepositories()`; per-format busy labels, a `role="alert"` message on failure or when a popup blocker eats the print window. No store — export is a one-shot action with no session state worth keeping. |
 | `export/download.ts` | The browser-only delivery half, deliberately outside `domain/`: `downloadTextFile` (object URL + anchor click) and `openPrintDialog` (`window.open` → write → `print()`, returning `false` when popup-blocked so the page can explain). |
@@ -245,7 +253,7 @@ Zustand owns UI/session state only; persisted data always flows through the doma
 
 | File | Purpose |
 |------|---------|
-| `src/App.tsx` | `createBrowserRouter` with all eight routes from brief §6 (`/`, `/memories`, `/memories/:id`, `/memories/:id/edit`, `/search`, `/graph`, `/export`, `/settings`) nested under `AppShell`, plus a `*` catch-all → `NotFoundPage` (#23). `basename` follows `import.meta.env.BASE_URL` so routes resolve under the GitHub Pages subpath (#21). |
+| `src/App.tsx` | `createBrowserRouter` with the eight routes from brief §6 (`/`, `/memories`, `/memories/:id`, `/memories/:id/edit`, `/search`, `/graph`, `/export`, `/settings`) plus `/memories/new` and `/memories/:id/history` (#5), all nested under `AppShell`, plus a `*` catch-all → `NotFoundPage` (#23). `basename` follows `import.meta.env.BASE_URL` so routes resolve under the GitHub Pages subpath (#21). |
 | `src/app/AppShell.tsx` | Responsive shell (reworked in #3/#14). Desktop (`sm+`): header with title + horizontal text nav. Phones: header shows the title only; navigation moves to a **fixed bottom tab bar** — six icon+label tabs (lucide icons), each ≥56px tall, `env(safe-area-inset-bottom)` padding, `main` gets `pb-28` so content clears the bar. Only one nav is in the accessibility tree at a time (the other is `display:none`). Verified at 390×844: no overflow, no clipping. |
 | `src/main.tsx` | Entry point. Calls `requestPersistentStorage()` fire-and-forget before render (added in #17) so the browser can protect IndexedDB from silent eviction. |
 | `src/app/SettingsPage.tsx` (real since #17) | "Your data" card: storage protection status + space used from `getStorageStatus()`, in a calm, informational tone (no alarm styling). When persistence is not granted, a dismissible "gentle suggestion" card points at the Export page for occasional backups — dismissal remembered in `localStorage`, no nagging. |
@@ -333,9 +341,10 @@ flowchart LR
         PS["#17 Persistent storage + Settings status"]
         EX["#11 Epic 11 — Export (JSON / Markdown / print-to-PDF)"]
         IM["#16 JSON backup import/restore"]
+        E4["#5 Epic 4 — Memory entry CRUD & version history"]
     end
     subgraph Next ["⏭ Next"]
-        E4["#5 Epic 4 — Memory entry CRUD & version history (Tier 5)"]
+        L10N["#18 Localization — Russian support (Tier 5)"]
     end
     Done --> Next
 ```
