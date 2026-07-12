@@ -1,10 +1,12 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useDailyPromptStore, useLocaleStore } from '@/stores'
 import { localeTag, type Locale } from '@/i18n'
 import { Button } from '@/shared/ui/button'
 import { Textarea } from '@/shared/ui/textarea'
+import { TextField } from '@/shared/ui/text-field'
 import { Card, CardContent } from '@/shared/ui/card'
+import { intInRangeError } from '@/features/memory-entry/memory-form'
 
 function todayLabel(locale: Locale) {
   return new Date().toLocaleDateString(localeTag(locale), {
@@ -15,14 +17,30 @@ function todayLabel(locale: Locale) {
 }
 
 export function TodayPage() {
-  const { prompt, todaysMemories, draft, status, error, load, setDraft, save } =
-    useDailyPromptStore()
+  const {
+    prompt,
+    todaysMemories,
+    draft,
+    draftApproxAge,
+    draftApproxYear,
+    status,
+    error,
+    load,
+    setDraft,
+    setDraftApproxAge,
+    setDraftApproxYear,
+    save,
+  } = useDailyPromptStore()
   const t = useLocaleStore((s) => s.dictionary)
   const locale = useLocaleStore((s) => s.locale)
+  const [showWhen, setShowWhen] = useState(() => Boolean(draftApproxAge || draftApproxYear))
 
   useEffect(() => {
     void load()
   }, [load])
+
+  const ageError = intInRangeError(draftApproxAge, 0, 120, t.memoryForm.ageRange)
+  const yearError = intInRangeError(draftApproxYear, 1000, 9999, t.memoryForm.yearFourDigit)
 
   if (status === 'loading' || (status === 'idle' && !prompt)) {
     return <p className="py-24 text-center text-muted-foreground">{t.today.opening}</p>
@@ -57,6 +75,38 @@ export function TodayPage() {
           disabled={status === 'saving'}
           className="min-h-48"
         />
+
+        {showWhen ? (
+          <div className="grid gap-6 sm:grid-cols-2">
+            <TextField
+              label={t.memoryForm.approxAgeLabel}
+              hint={t.memoryForm.approxHint}
+              inputMode="numeric"
+              value={draftApproxAge}
+              onChange={(e) => setDraftApproxAge(e.target.value)}
+              error={ageError}
+              disabled={status === 'saving'}
+            />
+            <TextField
+              label={t.memoryForm.approxYearLabel}
+              hint={t.memoryForm.approxHint}
+              inputMode="numeric"
+              value={draftApproxYear}
+              onChange={(e) => setDraftApproxYear(e.target.value)}
+              error={yearError}
+              disabled={status === 'saving'}
+            />
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowWhen(true)}
+            className="self-start font-sans text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
+          >
+            {t.today.whenToggle}
+          </button>
+        )}
+
         <div className="flex items-center justify-end gap-4">
           <Link
             to="/memories/new"
@@ -64,7 +114,10 @@ export function TodayPage() {
           >
             {t.today.openFullForm}
           </Link>
-          <Button onClick={() => void save()} disabled={status === 'saving' || !draft.trim()}>
+          <Button
+            onClick={() => void save()}
+            disabled={status === 'saving' || !draft.trim() || Boolean(ageError) || Boolean(yearError)}
+          >
             {status === 'saving' ? t.common.saving : t.common.keepThisMemory}
           </Button>
         </div>

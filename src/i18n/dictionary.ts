@@ -46,6 +46,7 @@ export interface Dictionary {
     textareaHint: string
     openFullForm: string
     keptTodayPrefix: string
+    whenToggle: string
   }
   memories: {
     loading: string

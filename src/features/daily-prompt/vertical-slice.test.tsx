@@ -21,6 +21,8 @@ beforeEach(() => {
     prompt: null,
     todaysMemories: [],
     draft: '',
+    draftApproxAge: '',
+    draftApproxYear: '',
     status: 'idle',
     error: null,
   })
@@ -68,6 +70,59 @@ describe('vertical slice: prompt → write → save → memories list', () => {
     const entries = await screen.findAllByText('My grandmother kept raspberry jam on the top shelf.')
     expect(entries.length).toBeGreaterThan(0)
     expect(screen.getByText('Memories')).toBeInTheDocument()
+  })
+
+  it('captures an optional approximate age and year on quick entry (#25)', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <TodayPage />
+      </MemoryRouter>
+    )
+    await screen.findByRole('heading', { level: 1 })
+
+    // fields are collapsed behind a quiet toggle until asked for
+    expect(screen.queryByLabelText('About how old were you?')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'When was this, roughly?' }))
+
+    await user.type(
+      screen.getByLabelText('A memory this word brings back'),
+      'The kitchen smelled of dill and fresh bread.'
+    )
+    await user.type(screen.getByLabelText('About how old were you?'), '8')
+    await user.type(screen.getByLabelText('Around what year?'), '1994')
+    await user.click(screen.getByRole('button', { name: 'Keep this memory' }))
+
+    await waitFor(() => {
+      expect(useDailyPromptStore.getState().todaysMemories).toHaveLength(1)
+    })
+    const saved = useDailyPromptStore.getState().todaysMemories[0]
+    expect(saved.approxAge).toBe(8)
+    expect(saved.approxYear).toBe(1994)
+    expect(useDailyPromptStore.getState().draftApproxAge).toBe('')
+    expect(useDailyPromptStore.getState().draftApproxYear).toBe('')
+  })
+
+  it('keeps saving blocked while the approximate age or year is out of range', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <TodayPage />
+      </MemoryRouter>
+    )
+    await screen.findByRole('heading', { level: 1 })
+    await user.click(screen.getByRole('button', { name: 'When was this, roughly?' }))
+
+    await user.type(
+      screen.getByLabelText('A memory this word brings back'),
+      'A memory with an implausible age.'
+    )
+    await user.type(screen.getByLabelText('About how old were you?'), '130')
+
+    expect(
+      screen.getByText('If you give an age, make it a whole number between 0 and 120.')
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Keep this memory' })).toBeDisabled()
   })
 
   it('shows the calm empty state when nothing has been written', async () => {

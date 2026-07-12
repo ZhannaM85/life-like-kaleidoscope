@@ -5,6 +5,7 @@ import { getOrCreateTodaysPrompt, getWordPool, localDateKey } from '@/domain/pro
 import { createMemory } from '@/domain/memory'
 import { ensureUserProfile } from '@/domain/user'
 import { defaultGenerateId, nowIso } from '@/domain/shared'
+import { intInRangeError, optionalNumber } from '@/features/memory-entry/memory-form'
 import { getRepositories } from './repositories'
 import { useLocaleStore } from './locale-store'
 
@@ -13,10 +14,15 @@ interface DailyPromptState {
   /** Memories already written for today's prompt (there may be several). */
   todaysMemories: Memory[]
   draft: string
+  /** Optional, quiet "when was this, roughly?" guesses (#25) — raw strings, same shape as the full form. */
+  draftApproxAge: string
+  draftApproxYear: string
   status: 'idle' | 'loading' | 'ready' | 'saving' | 'error'
   error: string | null
   load: () => Promise<void>
   setDraft: (text: string) => void
+  setDraftApproxAge: (text: string) => void
+  setDraftApproxYear: (text: string) => void
   save: () => Promise<void>
 }
 
@@ -24,6 +30,8 @@ export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
   prompt: null,
   todaysMemories: [],
   draft: '',
+  draftApproxAge: '',
+  draftApproxYear: '',
   status: 'idle',
   error: null,
 
@@ -63,23 +71,41 @@ export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
     set({ draft: text })
   },
 
+  setDraftApproxAge(text) {
+    set({ draftApproxAge: text })
+  },
+
+  setDraftApproxYear(text) {
+    set({ draftApproxYear: text })
+  },
+
   async save() {
-    const { prompt, draft } = get()
+    const { prompt, draft, draftApproxAge, draftApproxYear } = get()
     const story = draft.trim()
     if (!prompt || !story) return
+    if (intInRangeError(draftApproxAge, 0, 120, '') || intInRangeError(draftApproxYear, 1000, 9999, ''))
+      return
 
     const { memories, userProfile } = getRepositories()
     set({ status: 'saving', error: null })
     try {
       const profile = await ensureUserProfile(userProfile, { generateId: defaultGenerateId })
       const created = createMemory(
-        { promptId: prompt.id, story, authoredBy: profile.id },
+        {
+          promptId: prompt.id,
+          story,
+          approxAge: optionalNumber(draftApproxAge),
+          approxYear: optionalNumber(draftApproxYear),
+          authoredBy: profile.id,
+        },
         { generateId: defaultGenerateId, now: nowIso }
       )
       await memories.create(created)
       set((state) => ({
         todaysMemories: [...state.todaysMemories, created.memory],
         draft: '',
+        draftApproxAge: '',
+        draftApproxYear: '',
         status: 'ready',
       }))
     } catch (e) {

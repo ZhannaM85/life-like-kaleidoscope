@@ -19,13 +19,29 @@ export interface MemoryFormValues {
   tags: string
 }
 
+function isBlankOrValidInt(value: string, min: number, max: number): boolean {
+  const trimmed = value.trim()
+  if (trimmed === '') return true
+  const n = Number(trimmed)
+  return Number.isInteger(n) && n >= min && n <= max
+}
+
 function optionalIntInRange(min: number, max: number, message: string) {
-  return z.string().refine((value) => {
-    const trimmed = value.trim()
-    if (trimmed === '') return true
-    const n = Number(trimmed)
-    return Number.isInteger(n) && n >= min && n <= max
-  }, message)
+  return z.string().refine((value) => isBlankOrValidInt(value, min, max), message)
+}
+
+/**
+ * Same range check as the full form's Zod schema, exposed standalone so
+ * quick-entry surfaces (e.g. the Today screen, #25) can validate the same
+ * approx-age/year fields without pulling in the whole form schema.
+ */
+export function intInRangeError(
+  value: string,
+  min: number,
+  max: number,
+  message: string
+): string | undefined {
+  return isBlankOrValidInt(value, min, max) ? undefined : message
 }
 
 /** The validation messages, supplied by the active dictionary (#18). */
@@ -76,7 +92,7 @@ export interface MemoryFormFields {
   tagLabels: string[]
 }
 
-function optionalNumber(raw: string): number | undefined {
+export function optionalNumber(raw: string): number | undefined {
   const trimmed = raw.trim()
   return trimmed === '' ? undefined : Number(trimmed)
 }

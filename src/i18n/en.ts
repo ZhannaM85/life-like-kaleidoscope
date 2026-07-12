@@ -45,6 +45,7 @@ export const en: Dictionary = {
     textareaHint: 'A few sentences are plenty. There is no wrong way to remember.',
     openFullForm: 'More to add? Open the full form',
     keptTodayPrefix: 'Kept today —',
+    whenToggle: 'When was this, roughly?',
   },
   memories: {
     loading: 'Turning the pages…',
