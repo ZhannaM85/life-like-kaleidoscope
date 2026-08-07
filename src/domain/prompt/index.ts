@@ -10,7 +10,7 @@ export {
   type ChooseDailyWordArgs,
   type DailyPromptDeps,
 } from './daily-prompt'
-export { WORD_POOL, WORD_POOL_RU, getWordPool, type Locale } from './words'
+export { WORD_POOL, WORD_POOL_RU, getWordPool, wordBelongsToLocale, type Locale } from './words'
 export {
   excludeBlocked,
   type BlockedWord,

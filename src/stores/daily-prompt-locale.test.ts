@@ -45,22 +45,50 @@ describe('daily prompt × locale (#18)', () => {
     expect(WORD_POOL_RU).toContain(prompt!.word)
   })
 
-  it("keeps today's already-issued word when the language changes mid-day", async () => {
+  it('regenerates today\'s word for the new locale on reload, if nothing has been written yet (#34)', async () => {
     await useDailyPromptStore.getState().load()
     const issued = useDailyPromptStore.getState().prompt
     expect(issued).not.toBeNull()
     expect(WORD_POOL).toContain(issued!.word)
 
-    // Switch to Russian and reload as if the page were reopened — the word
-    // already issued today must survive untouched (user data is never
-    // rewritten by a preference change).
+    // Switch to Russian and reload as if the page were reopened — the freeze
+    // exists to protect a written memory, not the word display, so with
+    // nothing written yet the word may safely redraw from the new pool.
     useLocaleStore.getState().setLocale('ru')
     resetDailyPromptStore()
     await useDailyPromptStore.getState().load()
 
     const reloaded = useDailyPromptStore.getState().prompt
     expect(reloaded).not.toBeNull()
-    expect(reloaded!.id).toBe(issued!.id)
-    expect(reloaded!.word).toBe(issued!.word)
+    expect(reloaded!.id).not.toBe(issued!.id)
+    expect(WORD_POOL_RU).toContain(reloaded!.word)
+
+    // The English issuance stays in history, just marked skipped — nothing
+    // is deleted, only superseded (same mechanic as #27's skip).
+    const { getRepositories } = await import('@/stores')
+    const originalStillStored = await getRepositories().prompts.getById(issued!.id)
+    expect(originalStillStored?.skipped).toBe(true)
+  })
+
+  it("keeps today's word frozen across a language switch once a memory has been written (#34)", async () => {
+    await useDailyPromptStore.getState().load()
+    const issued = useDailyPromptStore.getState().prompt!
+
+    const { getRepositories } = await import('@/stores')
+    const { createMemory } = await import('@/domain/memory')
+    const { defaultGenerateId } = await import('@/domain/shared')
+    const created = createMemory(
+      { promptId: issued.id, story: 'Written before switching languages.', authoredBy: 'u1' },
+      { generateId: defaultGenerateId, now: () => new Date().toISOString() }
+    )
+    await getRepositories().memories.create(created)
+
+    useLocaleStore.getState().setLocale('ru')
+    resetDailyPromptStore()
+    await useDailyPromptStore.getState().load()
+
+    const reloaded = useDailyPromptStore.getState().prompt
+    expect(reloaded!.id).toBe(issued.id)
+    expect(reloaded!.word).toBe(issued.word)
   })
 })

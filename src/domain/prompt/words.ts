@@ -521,3 +521,18 @@ const WORD_POOLS: Record<Locale, readonly string[]> = {
 export function getWordPool(locale: Locale): readonly string[] {
   return WORD_POOLS[locale]
 }
+
+/**
+ * Whether `word` could have been drawn from `locale`'s curated pool, or is
+ * one of the user's own custom words (#28 — not locale-scoped, so it belongs
+ * to every locale equally). Used to detect a word issued under a *different*
+ * locale (#34): if it doesn't belong here, a language switch drew it before
+ * this one was active.
+ */
+export function wordBelongsToLocale(
+  word: string,
+  locale: Locale,
+  customWords: readonly string[]
+): boolean {
+  return getWordPool(locale).includes(word) || customWords.includes(word)
+}

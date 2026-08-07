@@ -6,6 +6,7 @@ import {
   skipTodaysPrompt,
   pickTodaysWord,
   getWordPool,
+  wordBelongsToLocale,
   localDateKey,
   excludeBlocked,
 } from '@/domain/prompt'
@@ -74,14 +75,14 @@ export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
     // see "no prompt today" and each create one.
     if (get().status === 'loading') return
 
-    const { memories, prompts } = getRepositories()
+    const { memories, prompts, customWords } = getRepositories()
     set({ status: 'loading', error: null })
     try {
-      // The pool is read at creation time only — a prompt already issued
-      // today is returned as-is, so a language switch mid-day never changes
-      // the word already shown (#18).
+      // A prompt already issued today is returned as-is by default — a
+      // language switch mid-day never rewrites a word a memory was already
+      // written against (#18).
       const locale = useLocaleStore.getState().locale
-      const prompt = await getOrCreateTodaysPrompt(prompts, {
+      let prompt = await getOrCreateTodaysPrompt(prompts, {
         generateId: defaultGenerateId,
         now: nowIso,
         wordPool: await effectiveWordPool(locale),
@@ -95,6 +96,21 @@ export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
         .map((p) => p.id)
       const lists = await Promise.all(todaysPromptIds.map((id) => memories.getByPromptId(id)))
       const todaysMemories = lists.flat().sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+
+      // #34: the freeze above protects a written memory, not the word
+      // display itself — until one exists, a locale switch since the word
+      // was issued may safely redraw it from the now-active pool.
+      if (todaysMemories.length === 0) {
+        const custom = (await customWords.getAll()).map((c) => c.word)
+        if (!wordBelongsToLocale(prompt.word, locale, custom)) {
+          prompt = await skipTodaysPrompt(prompts, prompt, {
+            generateId: defaultGenerateId,
+            now: nowIso,
+            wordPool: await effectiveWordPool(locale),
+          })
+        }
+      }
+
       set({ prompt, todaysMemories, status: 'ready' })
     } catch (e) {
       set({ status: 'error', error: e instanceof Error ? e.message : String(e) })
