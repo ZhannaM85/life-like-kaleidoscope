@@ -181,6 +181,22 @@ describe('IndexedDbBlockedWordRepository', () => {
   })
 })
 
+describe('IndexedDbCustomWordRepository', () => {
+  it('saves, lists, and removes custom words', async () => {
+    await repos.customWords.save({ id: 'custom-1', word: 'Dacha', createdAt: '2026-07-02T08:00:00.000Z' })
+    await repos.customWords.save({ id: 'custom-2', word: 'Zeppelin', createdAt: '2026-07-03T08:00:00.000Z' })
+
+    expect((await repos.customWords.getAll()).map((w) => w.word).sort()).toEqual([
+      'Dacha',
+      'Zeppelin',
+    ])
+
+    await repos.customWords.remove('custom-1')
+    const remaining = await repos.customWords.getAll()
+    expect(remaining.map((w) => w.id)).toEqual(['custom-2'])
+  })
+})
+
 describe('IndexedDbUserProfileRepository', () => {
   it('returns undefined before any profile is saved, then the saved profile', async () => {
     expect(await repos.userProfile.get()).toBeUndefined()

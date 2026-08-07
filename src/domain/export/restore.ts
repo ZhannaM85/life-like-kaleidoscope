@@ -58,6 +58,12 @@ const blockedWordSchema = z.object({
   blockedAt: isoDateStringSchema,
 })
 
+const customWordSchema = z.object({
+  id: entityIdSchema,
+  word: z.string(),
+  createdAt: isoDateStringSchema,
+})
+
 const personSchema = z.object({
   id: entityIdSchema,
   name: z.string(),
@@ -92,6 +98,7 @@ export const backupFileSchema = z.object({
     tags: z.array(tagSchema),
     photos: z.array(backupPhotoSchema),
     blockedWords: z.array(blockedWordSchema),
+    customWords: z.array(customWordSchema),
   }),
 })
 

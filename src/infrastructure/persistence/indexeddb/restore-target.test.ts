@@ -63,6 +63,11 @@ async function seedFullApp(repos: Repositories): Promise<void> {
     locale: 'en',
     blockedAt: '2026-07-03T08:00:00.000Z',
   })
+  await repos.customWords.save({
+    id: 'custom-1',
+    word: 'Dacha',
+    createdAt: '2026-07-02T08:00:00.000Z',
+  })
 }
 
 afterEach(async () => {
@@ -122,6 +127,15 @@ describe('IndexedDbRestoreTarget', () => {
       locale: 'en',
       blockedAt: '2026-07-03T08:00:00.000Z',
     })
+    expect(await repos.restore.hasUserData()).toBe(true)
+  })
+
+  it('counts a custom word as data too', async () => {
+    const repos = freshRepos()
+    await getOrCreateTodaysPrompt(repos.prompts, { generateId: defaultGenerateId, now: nowIso })
+    expect(await repos.restore.hasUserData()).toBe(false)
+
+    await repos.customWords.save({ id: 'custom-1', word: 'Dacha', createdAt: '2026-07-02T08:00:00.000Z' })
     expect(await repos.restore.hasUserData()).toBe(true)
   })
 

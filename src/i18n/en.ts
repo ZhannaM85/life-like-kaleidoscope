@@ -147,6 +147,12 @@ export const en: Dictionary = {
     hiddenWordsDescription:
       "Words you've chosen never to see again. You can bring any of them back.",
     restoreWord: 'Restore',
+    yourWordsTitle: 'Your words',
+    yourWordsDescription:
+      "Add your own prompt words — a place, a thing, a name only you would recognize. They join the daily rotation like any other word.",
+    addWordLabel: 'Add a word',
+    addWordHint: 'Concrete, sensory words tend to work best.',
+    addWord: 'Add',
   },
   exportPage: {
     title: 'Export',

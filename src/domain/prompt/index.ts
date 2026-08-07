@@ -15,3 +15,9 @@ export {
   type BlockedWord,
   type BlockedWordRepository,
 } from './blocklist'
+export {
+  isDuplicateWord,
+  prepareCustomWord,
+  type CustomWord,
+  type CustomWordRepository,
+} from './custom-words'

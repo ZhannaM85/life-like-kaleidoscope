@@ -251,8 +251,10 @@ describe('vertical slice: prompt → write → save → memories list', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { level: 1 }).textContent).not.toBe(word1)
     })
+    // `hasSkipped` is a separate state update after the store's — poll for it
+    // rather than assuming it already landed alongside the heading change.
     expect(
-      screen.getByRole('button', { name: 'Never show this word again' })
+      await screen.findByRole('button', { name: 'Never show this word again' })
     ).toBeInTheDocument()
   })
 

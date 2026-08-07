@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { createMemory } from '@/domain/memory'
 import type { Memory, MemoryVersion, Photo } from '@/domain/memory'
-import type { Prompt, BlockedWord } from '@/domain/prompt'
+import type { Prompt, BlockedWord, CustomWord } from '@/domain/prompt'
 import { localDateKey } from '@/domain/prompt'
 import type { Person } from '@/domain/person'
 import type { Place } from '@/domain/place'
@@ -41,6 +41,7 @@ function makeSources(data: {
   tags?: Tag[]
   profile?: UserProfile
   blockedWords?: BlockedWord[]
+  customWords?: CustomWord[]
 }): BackupSources {
   const memories = [...(data.memories ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const versions = data.versions ?? []
@@ -48,6 +49,7 @@ function makeSources(data: {
   const blobs = data.blobs ?? {}
   const prompts = data.prompts ?? []
   const blockedWords = data.blockedWords ?? []
+  const customWords = data.customWords ?? []
   return {
     memories: {
       create: notUsed,
@@ -79,6 +81,11 @@ function makeSources(data: {
       save: notUsed,
       remove: notUsed,
       getAll: () => Promise.resolve(blockedWords),
+    },
+    customWords: {
+      save: notUsed,
+      remove: notUsed,
+      getAll: () => Promise.resolve(customWords),
     },
   }
 }
@@ -236,6 +243,7 @@ describe('backupToPrintHtml', () => {
         tags: [],
         photos: [],
         blockedWords: [],
+        customWords: [],
       },
     })
 

@@ -1,6 +1,6 @@
 import Dexie, { type Table } from 'dexie'
 import type { Memory, MemoryVersion, Photo } from '@/domain/memory'
-import type { Prompt, BlockedWord } from '@/domain/prompt'
+import type { Prompt, BlockedWord, CustomWord } from '@/domain/prompt'
 import type { Person } from '@/domain/person'
 import type { Place } from '@/domain/place'
 import type { Tag } from '@/domain/tag'
@@ -29,6 +29,7 @@ export class LifeLikeKaleidoscopeDb extends Dexie {
   photoBlobs!: Table<PhotoBlobRow, string>
   userProfiles!: Table<UserProfile, string>
   blockedWords!: Table<BlockedWord, string>
+  customWords!: Table<CustomWord, string>
 
   constructor(name = 'life-like-kaleidoscope') {
     super(name)
@@ -46,6 +47,9 @@ export class LifeLikeKaleidoscopeDb extends Dexie {
     // Additive only — unlisted stores from version 1 carry forward untouched.
     this.version(2).stores({
       blockedWords: 'id, word, locale',
+    })
+    this.version(3).stores({
+      customWords: 'id, word',
     })
   }
 }

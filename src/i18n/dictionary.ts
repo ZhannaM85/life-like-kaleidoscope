@@ -138,6 +138,11 @@ export interface Dictionary {
     hiddenWordsTitle: string
     hiddenWordsDescription: string
     restoreWord: string
+    yourWordsTitle: string
+    yourWordsDescription: string
+    addWordLabel: string
+    addWordHint: string
+    addWord: string
   }
   exportPage: {
     title: string

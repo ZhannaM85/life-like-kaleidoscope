@@ -9,10 +9,11 @@ import { IndexedDbPlaceRepository } from './place-repository'
 import { IndexedDbTagRepository } from './tag-repository'
 import { IndexedDbUserProfileRepository } from './user-profile-repository'
 import { IndexedDbBlockedWordRepository } from './blocked-word-repository'
+import { IndexedDbCustomWordRepository } from './custom-word-repository'
 import { IndexedDbRestoreTarget } from './restore-target'
 import type { MemoryRepository, PhotoRepository } from '@/domain/memory'
 import type { RestoreTarget } from '@/domain/export'
-import type { PromptRepository, BlockedWordRepository } from '@/domain/prompt'
+import type { PromptRepository, BlockedWordRepository, CustomWordRepository } from '@/domain/prompt'
 import type { PersonRepository } from '@/domain/person'
 import type { PlaceRepository } from '@/domain/place'
 import type { TagRepository } from '@/domain/tag'
@@ -27,6 +28,7 @@ export { IndexedDbPlaceRepository } from './place-repository'
 export { IndexedDbTagRepository } from './tag-repository'
 export { IndexedDbUserProfileRepository } from './user-profile-repository'
 export { IndexedDbBlockedWordRepository } from './blocked-word-repository'
+export { IndexedDbCustomWordRepository } from './custom-word-repository'
 export { IndexedDbRestoreTarget } from './restore-target'
 
 /** Everything the app needs to talk to persistence, behind domain interfaces. */
@@ -40,6 +42,8 @@ export interface Repositories {
   userProfile: UserProfileRepository
   /** Never-show-again word blocklist (#27), per locale. */
   blockedWords: BlockedWordRepository
+  /** User-added "Your words" prompt words (#28) — not locale-scoped. */
+  customWords: CustomWordRepository
   /** Backup restore (#16) — replaces storage wholesale, so it sits beside, not inside, the per-entity repositories. */
   restore: RestoreTarget
 }
@@ -60,6 +64,7 @@ export function createIndexedDbRepositories(dbName?: string): Repositories {
     tags: new IndexedDbTagRepository(db),
     userProfile: new IndexedDbUserProfileRepository(db),
     blockedWords: new IndexedDbBlockedWordRepository(db),
+    customWords: new IndexedDbCustomWordRepository(db),
     restore: new IndexedDbRestoreTarget(db),
   }
 }

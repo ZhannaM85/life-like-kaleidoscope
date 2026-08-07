@@ -58,6 +58,9 @@ const fullBackup: BackupFile = {
     blockedWords: [
       { id: 'blocked-1', word: 'Hospital', locale: 'en', blockedAt: '2026-07-03T08:00:00.000Z' },
     ],
+    customWords: [
+      { id: 'custom-1', word: 'Dacha', createdAt: '2026-07-02T08:00:00.000Z' },
+    ],
   },
 }
 

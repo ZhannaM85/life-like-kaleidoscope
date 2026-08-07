@@ -16,10 +16,12 @@ import { getRepositories } from './repositories'
 import { useLocaleStore } from './locale-store'
 import type { Locale } from '@/domain/prompt'
 
-/** The active locale's pool with anything blocked (#27) removed. */
+/** The active locale's curated pool plus "Your words" (#28), minus anything blocked (#27). */
 async function effectiveWordPool(locale: Locale): Promise<readonly string[]> {
-  const blocked = await getRepositories().blockedWords.getAll()
-  return excludeBlocked(getWordPool(locale), blocked, locale)
+  const { blockedWords, customWords } = getRepositories()
+  const [blocked, custom] = await Promise.all([blockedWords.getAll(), customWords.getAll()])
+  const pool = [...getWordPool(locale), ...custom.map((c) => c.word)]
+  return excludeBlocked(pool, blocked, locale)
 }
 
 interface DailyPromptState {

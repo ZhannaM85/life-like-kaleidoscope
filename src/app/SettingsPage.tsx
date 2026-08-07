@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '@/shared/ui/page-header'
 import {
@@ -10,9 +10,11 @@ import {
   CardFooter,
 } from '@/shared/ui/card'
 import { Button } from '@/shared/ui/button'
+import { TextField } from '@/shared/ui/text-field'
 import { useLocaleStore, getRepositories } from '@/stores'
 import type { Dictionary, Locale } from '@/i18n'
-import type { BlockedWord } from '@/domain/prompt'
+import { prepareCustomWord, type BlockedWord, type CustomWord } from '@/domain/prompt'
+import { defaultGenerateId, nowIso } from '@/domain/shared'
 import {
   getStorageStatus,
   type StorageStatus,
@@ -73,6 +75,8 @@ export function SettingsPage() {
   const [status, setStatus] = useState<StorageStatus | null>(null)
   const [suggestionDismissed, setSuggestionDismissed] = useState(readSuggestionDismissed)
   const [blockedWords, setBlockedWords] = useState<BlockedWord[]>([])
+  const [customWords, setCustomWords] = useState<CustomWord[]>([])
+  const [newWord, setNewWord] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -96,6 +100,18 @@ export function SettingsPage() {
     }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+    void getRepositories()
+      .customWords.getAll()
+      .then((words) => {
+        if (!cancelled) setCustomWords(words)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   function dismissSuggestion() {
     saveSuggestionDismissed()
     setSuggestionDismissed(true)
@@ -104,6 +120,23 @@ export function SettingsPage() {
   async function restoreWord(id: string) {
     await getRepositories().blockedWords.remove(id)
     setBlockedWords((prev) => prev.filter((w) => w.id !== id))
+  }
+
+  async function handleAddWord(event: FormEvent) {
+    event.preventDefault()
+    const prepared = prepareCustomWord(newWord, customWords)
+    setNewWord('')
+    // Blank or duplicate input is silently dropped — guided, never an error
+    // to correct (#28's no-guilt stance, same as #27's).
+    if (!prepared) return
+    const created: CustomWord = { id: defaultGenerateId(), word: prepared, createdAt: nowIso() }
+    await getRepositories().customWords.save(created)
+    setCustomWords((prev) => [...prev, created])
+  }
+
+  async function removeCustomWord(id: string) {
+    await getRepositories().customWords.remove(id)
+    setCustomWords((prev) => prev.filter((w) => w.id !== id))
   }
 
   const languageLabel: Record<Locale, string> = {
@@ -137,6 +170,43 @@ export function SettingsPage() {
               </Button>
             ))}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t.settings.yourWordsTitle}</CardTitle>
+          <CardDescription>{t.settings.yourWordsDescription}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <form onSubmit={(e) => void handleAddWord(e)} className="flex items-end gap-2">
+            <div className="flex-1">
+              <TextField
+                label={t.settings.addWordLabel}
+                hint={t.settings.addWordHint}
+                value={newWord}
+                onChange={(e) => setNewWord(e.target.value)}
+              />
+            </div>
+            <Button type="submit" size="default" disabled={!newWord.trim()}>
+              {t.settings.addWord}
+            </Button>
+          </form>
+          {customWords.length > 0 && (
+            <ul className="flex flex-col gap-2">
+              {customWords.map((word) => (
+                <li
+                  key={word.id}
+                  className="flex items-center justify-between gap-2 font-sans text-sm"
+                >
+                  <span>{word.word}</span>
+                  <Button variant="ghost" size="sm" onClick={() => void removeCustomWord(word.id)}>
+                    {t.common.delete}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
 
