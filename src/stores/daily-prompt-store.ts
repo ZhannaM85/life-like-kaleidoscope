@@ -1,13 +1,26 @@
 import { create } from 'zustand'
 import type { Prompt } from '@/domain/prompt'
 import type { Memory, Mood } from '@/domain/memory'
-import { getOrCreateTodaysPrompt, getWordPool, localDateKey } from '@/domain/prompt'
+import {
+  getOrCreateTodaysPrompt,
+  skipTodaysPrompt,
+  getWordPool,
+  localDateKey,
+  excludeBlocked,
+} from '@/domain/prompt'
 import { createMemory } from '@/domain/memory'
 import { ensureUserProfile } from '@/domain/user'
 import { defaultGenerateId, nowIso } from '@/domain/shared'
 import { intInRangeError, optionalNumber } from '@/features/memory-entry/memory-form'
 import { getRepositories } from './repositories'
 import { useLocaleStore } from './locale-store'
+import type { Locale } from '@/domain/prompt'
+
+/** The active locale's pool with anything blocked (#27) removed. */
+async function effectiveWordPool(locale: Locale): Promise<readonly string[]> {
+  const blocked = await getRepositories().blockedWords.getAll()
+  return excludeBlocked(getWordPool(locale), blocked, locale)
+}
 
 interface DailyPromptState {
   prompt: Prompt | null
@@ -20,6 +33,8 @@ interface DailyPromptState {
   /** Optional mood chip (#26) — unset until tapped. */
   draftMood: Mood | undefined
   status: 'idle' | 'loading' | 'ready' | 'saving' | 'error'
+  /** True while a skip/never-again action (#27) is in flight. */
+  skipping: boolean
   error: string | null
   load: () => Promise<void>
   setDraft: (text: string) => void
@@ -27,6 +42,10 @@ interface DailyPromptState {
   setDraftApproxYear: (text: string) => void
   setDraftMood: (mood: Mood | undefined) => void
   save: () => Promise<void>
+  /** "Skip this word for now" (#27) — issues a replacement, clears the in-progress draft. */
+  skipPrompt: () => Promise<void>
+  /** "Never show this word again" (#27) — blocks the current word, then skips to a replacement. */
+  blockWord: () => Promise<void>
 }
 
 export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
@@ -37,6 +56,7 @@ export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
   draftApproxYear: '',
   draftMood: undefined,
   status: 'idle',
+  skipping: false,
   error: null,
 
   async load() {
@@ -51,10 +71,11 @@ export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
       // The pool is read at creation time only — a prompt already issued
       // today is returned as-is, so a language switch mid-day never changes
       // the word already shown (#18).
+      const locale = useLocaleStore.getState().locale
       const prompt = await getOrCreateTodaysPrompt(prompts, {
         generateId: defaultGenerateId,
         now: nowIso,
-        wordPool: getWordPool(useLocaleStore.getState().locale),
+        wordPool: await effectiveWordPool(locale),
       })
       // Collect memories across *all* of today's prompts, not just the
       // canonical one — tolerates duplicate same-day prompts from older
@@ -121,5 +142,50 @@ export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
     } catch (e) {
       set({ status: 'error', error: e instanceof Error ? e.message : String(e) })
     }
+  },
+
+  async skipPrompt() {
+    const { prompt } = get()
+    if (!prompt) return
+    const { prompts } = getRepositories()
+    const locale = useLocaleStore.getState().locale
+    set({ skipping: true, error: null })
+    try {
+      const next = await skipTodaysPrompt(prompts, prompt, {
+        generateId: defaultGenerateId,
+        now: nowIso,
+        wordPool: await effectiveWordPool(locale),
+      })
+      set({
+        prompt: next,
+        draft: '',
+        draftApproxAge: '',
+        draftApproxYear: '',
+        draftMood: undefined,
+        skipping: false,
+      })
+    } catch (e) {
+      set({ skipping: false, error: e instanceof Error ? e.message : String(e) })
+    }
+  },
+
+  async blockWord() {
+    const { prompt } = get()
+    if (!prompt) return
+    const { blockedWords } = getRepositories()
+    const locale = useLocaleStore.getState().locale
+    set({ skipping: true, error: null })
+    try {
+      await blockedWords.save({
+        id: defaultGenerateId(),
+        word: prompt.word,
+        locale,
+        blockedAt: nowIso(),
+      })
+    } catch (e) {
+      set({ skipping: false, error: e instanceof Error ? e.message : String(e) })
+      return
+    }
+    await get().skipPrompt()
   },
 }))

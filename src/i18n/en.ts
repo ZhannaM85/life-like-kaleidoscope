@@ -46,6 +46,8 @@ export const en: Dictionary = {
     openFullForm: 'More to add? Open the full form',
     keptTodayPrefix: 'Kept today —',
     whenToggle: 'When was this, roughly?',
+    skipWord: "This word isn't landing today? Try another",
+    neverShowAgain: 'Never show this word again',
   },
   memories: {
     loading: 'Turning the pages…',
@@ -141,6 +143,10 @@ export const en: Dictionary = {
       "Menus, buttons, and new prompt words follow this choice. Memories you've already written keep the words they were written with.",
     languageEnglish: 'English',
     languageRussian: 'Русский',
+    hiddenWordsTitle: 'Hidden words',
+    hiddenWordsDescription:
+      "Words you've chosen never to see again. You can bring any of them back.",
+    restoreWord: 'Restore',
   },
   exportPage: {
     title: 'Export',

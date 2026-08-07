@@ -10,8 +10,9 @@ import {
   CardFooter,
 } from '@/shared/ui/card'
 import { Button } from '@/shared/ui/button'
-import { useLocaleStore } from '@/stores'
+import { useLocaleStore, getRepositories } from '@/stores'
 import type { Dictionary, Locale } from '@/i18n'
+import type { BlockedWord } from '@/domain/prompt'
 import {
   getStorageStatus,
   type StorageStatus,
@@ -71,6 +72,7 @@ export function SettingsPage() {
   const setLocale = useLocaleStore((s) => s.setLocale)
   const [status, setStatus] = useState<StorageStatus | null>(null)
   const [suggestionDismissed, setSuggestionDismissed] = useState(readSuggestionDismissed)
+  const [blockedWords, setBlockedWords] = useState<BlockedWord[]>([])
 
   useEffect(() => {
     let cancelled = false
@@ -82,15 +84,33 @@ export function SettingsPage() {
     }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+    void getRepositories()
+      .blockedWords.getAll()
+      .then((words) => {
+        if (!cancelled) setBlockedWords(words)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   function dismissSuggestion() {
     saveSuggestionDismissed()
     setSuggestionDismissed(true)
+  }
+
+  async function restoreWord(id: string) {
+    await getRepositories().blockedWords.remove(id)
+    setBlockedWords((prev) => prev.filter((w) => w.id !== id))
   }
 
   const languageLabel: Record<Locale, string> = {
     en: t.settings.languageEnglish,
     ru: t.settings.languageRussian,
   }
+  const localeBlockedWords = blockedWords.filter((w) => w.locale === locale)
 
   return (
     <div className="flex flex-col gap-6">
@@ -119,6 +139,30 @@ export function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {localeBlockedWords.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t.settings.hiddenWordsTitle}</CardTitle>
+            <CardDescription>{t.settings.hiddenWordsDescription}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="flex flex-col gap-2">
+              {localeBlockedWords.map((word) => (
+                <li
+                  key={word.id}
+                  className="flex items-center justify-between gap-2 font-sans text-sm"
+                >
+                  <span>{word.word}</span>
+                  <Button variant="ghost" size="sm" onClick={() => void restoreWord(word.id)}>
+                    {t.settings.restoreWord}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

@@ -26,6 +26,7 @@ export function TodayPage() {
     draftApproxYear,
     draftMood,
     status,
+    skipping,
     error,
     load,
     setDraft,
@@ -33,10 +34,15 @@ export function TodayPage() {
     setDraftApproxYear,
     setDraftMood,
     save,
+    skipPrompt,
+    blockWord,
   } = useDailyPromptStore()
   const t = useLocaleStore((s) => s.dictionary)
   const locale = useLocaleStore((s) => s.locale)
   const [showWhen, setShowWhen] = useState(() => Boolean(draftApproxAge || draftApproxYear))
+  // Revealed only after a skip in this session — "never again" is a
+  // deliberate second step, never a sibling of "skip" on first sight (#27).
+  const [hasSkipped, setHasSkipped] = useState(false)
   const moodOptions = [
     { value: 'happy', label: t.mood.happy },
     { value: 'bittersweet', label: t.mood.bittersweet },
@@ -65,6 +71,11 @@ export function TodayPage() {
 
   if (!prompt) return null
 
+  async function handleSkip() {
+    await skipPrompt()
+    setHasSkipped(true)
+  }
+
   return (
     <div className="flex flex-col gap-10">
       <section className="flex flex-col items-center gap-2 pt-6 text-center">
@@ -72,6 +83,28 @@ export function TodayPage() {
           {todayLabel(locale)} {t.today.wordSuffix}
         </p>
         <h1 className="text-5xl font-medium tracking-tight text-foreground">{prompt.word}</h1>
+        {todaysMemories.length === 0 && (
+          <div className="flex flex-col items-center gap-1 pt-1">
+            <button
+              type="button"
+              onClick={() => void handleSkip()}
+              disabled={skipping}
+              className="font-sans text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground disabled:opacity-50"
+            >
+              {t.today.skipWord}
+            </button>
+            {hasSkipped && (
+              <button
+                type="button"
+                onClick={() => void blockWord()}
+                disabled={skipping}
+                className="font-sans text-xs text-muted-foreground/70 underline underline-offset-2 hover:text-foreground disabled:opacity-50"
+              >
+                {t.today.neverShowAgain}
+              </button>
+            )}
+          </div>
+        )}
       </section>
 
       <section aria-label={t.today.writeSectionLabel} className="flex flex-col gap-4">

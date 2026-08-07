@@ -155,6 +155,32 @@ describe('IndexedDbPhotoRepository', () => {
   })
 })
 
+describe('IndexedDbBlockedWordRepository', () => {
+  it('saves, lists, and removes blocked words', async () => {
+    await repos.blockedWords.save({
+      id: 'blocked-1',
+      word: 'Hospital',
+      locale: 'en',
+      blockedAt: '2026-07-03T08:00:00.000Z',
+    })
+    await repos.blockedWords.save({
+      id: 'blocked-2',
+      word: 'Больница',
+      locale: 'ru',
+      blockedAt: '2026-07-04T08:00:00.000Z',
+    })
+
+    expect((await repos.blockedWords.getAll()).map((w) => w.word).sort()).toEqual([
+      'Hospital',
+      'Больница',
+    ])
+
+    await repos.blockedWords.remove('blocked-1')
+    const remaining = await repos.blockedWords.getAll()
+    expect(remaining.map((w) => w.id)).toEqual(['blocked-2'])
+  })
+})
+
 describe('IndexedDbUserProfileRepository', () => {
   it('returns undefined before any profile is saved, then the saved profile', async () => {
     expect(await repos.userProfile.get()).toBeUndefined()

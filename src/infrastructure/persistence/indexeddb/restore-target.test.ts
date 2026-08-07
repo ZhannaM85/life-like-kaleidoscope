@@ -57,6 +57,12 @@ async function seedFullApp(repos: Repositories): Promise<void> {
     { id: 'photo-1', memoryId: created.memory.id, blobRef: 'blob-1', caption: 'The fence' },
     new Blob(['hello'], { type: 'image/png' })
   )
+  await repos.blockedWords.save({
+    id: 'blocked-1',
+    word: 'Divorce',
+    locale: 'en',
+    blockedAt: '2026-07-03T08:00:00.000Z',
+  })
 }
 
 afterEach(async () => {
@@ -102,6 +108,20 @@ describe('IndexedDbRestoreTarget', () => {
     expect(await repos.restore.hasUserData()).toBe(false)
 
     await repos.people.save({ id: 'person-1', name: 'Mom' })
+    expect(await repos.restore.hasUserData()).toBe(true)
+  })
+
+  it('counts a blocked word (a deliberate user action) as data too', async () => {
+    const repos = freshRepos()
+    await getOrCreateTodaysPrompt(repos.prompts, { generateId: defaultGenerateId, now: nowIso })
+    expect(await repos.restore.hasUserData()).toBe(false)
+
+    await repos.blockedWords.save({
+      id: 'blocked-1',
+      word: 'Hospital',
+      locale: 'en',
+      blockedAt: '2026-07-03T08:00:00.000Z',
+    })
     expect(await repos.restore.hasUserData()).toBe(true)
   })
 

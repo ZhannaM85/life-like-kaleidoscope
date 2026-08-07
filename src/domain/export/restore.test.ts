@@ -55,6 +55,9 @@ const fullBackup: BackupFile = {
       },
       { id: 'photo-2', memoryId: edited.memory.id, blobRef: 'gone', content: null },
     ],
+    blockedWords: [
+      { id: 'blocked-1', word: 'Hospital', locale: 'en', blockedAt: '2026-07-03T08:00:00.000Z' },
+    ],
   },
 }
 

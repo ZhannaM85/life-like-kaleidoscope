@@ -17,15 +17,17 @@ export class IndexedDbRestoreTarget implements RestoreTarget {
   async hasUserData(): Promise<boolean> {
     // Deliberately not counting prompts or profiles: the app auto-creates
     // today's prompt on load and a default profile on first save, and those
-    // must not block restoring into an otherwise fresh browser.
-    const [memories, people, places, tags, photos] = await Promise.all([
+    // must not block restoring into an otherwise fresh browser. Blocked words
+    // (#27) are always a deliberate user action, so they do count.
+    const [memories, people, places, tags, photos, blockedWords] = await Promise.all([
       this.db.memories.count(),
       this.db.people.count(),
       this.db.places.count(),
       this.db.tags.count(),
       this.db.photos.count(),
+      this.db.blockedWords.count(),
     ])
-    return memories + people + places + tags + photos > 0
+    return memories + people + places + tags + photos + blockedWords > 0
   }
 
   async replaceAll(backup: BackupFile): Promise<void> {
@@ -56,6 +58,7 @@ export class IndexedDbRestoreTarget implements RestoreTarget {
       this.db.photos,
       this.db.photoBlobs,
       this.db.userProfiles,
+      this.db.blockedWords,
     ]
     await this.db.transaction('rw', tables, async () => {
       await Promise.all(tables.map((table) => table.clear()))
@@ -68,6 +71,7 @@ export class IndexedDbRestoreTarget implements RestoreTarget {
         this.db.tags.bulkAdd(backup.data.tags),
         this.db.photos.bulkAdd(photos),
         this.db.photoBlobs.bulkAdd(photoBlobs),
+        this.db.blockedWords.bulkAdd(backup.data.blockedWords),
         ...(backup.data.userProfile ? [this.db.userProfiles.add(backup.data.userProfile)] : []),
       ])
     })

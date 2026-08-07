@@ -4,6 +4,7 @@ import type { PromptRepository } from './repository'
 import {
   chooseDailyWord,
   getOrCreateTodaysPrompt,
+  skipTodaysPrompt,
   localDateKey,
   DEFAULT_NO_REPEAT_WINDOW_DAYS,
 } from './daily-prompt'
@@ -12,7 +13,11 @@ import { WORD_POOL } from './words'
 class InMemoryPromptRepository implements PromptRepository {
   prompts: Prompt[] = []
   async save(prompt: Prompt) {
-    this.prompts.push(prompt)
+    // Upsert by id, matching the real repository's Dexie `put` semantics —
+    // skipTodaysPrompt re-saves an already-issued prompt to flag it skipped.
+    const index = this.prompts.findIndex((p) => p.id === prompt.id)
+    if (index === -1) this.prompts.push(prompt)
+    else this.prompts[index] = prompt
   }
   async getById(id: string) {
     return this.prompts.find((p) => p.id === id)
@@ -111,6 +116,66 @@ describe('getOrCreateTodaysPrompt', () => {
       seen.add(prompt.word)
     }
     expect(repo.prompts).toHaveLength(5)
+  })
+})
+
+describe('skipTodaysPrompt', () => {
+  it('marks the current prompt skipped and issues a fresh word for the same day', async () => {
+    const repo = new InMemoryPromptRepository()
+    const morning = new Date(2026, 6, 5, 9, 0).toISOString()
+    const later = new Date(2026, 6, 5, 9, 5).toISOString()
+    const pool = ['Rain', 'Bicycle', 'Kitchen']
+
+    const current = await getOrCreateTodaysPrompt(repo, {
+      ...deps(morning),
+      generateId: () => 'first',
+      wordPool: pool,
+    })
+    const replacement = await skipTodaysPrompt(repo, current, {
+      ...deps(later),
+      generateId: () => 'second',
+      wordPool: pool,
+    })
+
+    expect(replacement.id).toBe('second')
+    expect(replacement.word).not.toBe(current.word)
+    expect(replacement.skipped).toBeFalsy()
+
+    const stored = await repo.getById(current.id)
+    expect(stored?.skipped).toBe(true)
+  })
+
+  it('never re-picks the just-skipped word (its issuance keeps it inside the window)', async () => {
+    const repo = new InMemoryPromptRepository()
+    const morning = new Date(2026, 6, 5, 9, 0).toISOString()
+    const pool = ['Rain', 'Bicycle']
+
+    const current = await getOrCreateTodaysPrompt(repo, {
+      ...deps(morning),
+      generateId: () => 'first',
+      wordPool: pool,
+    })
+    const replacement = await skipTodaysPrompt(repo, current, {
+      ...deps(morning),
+      generateId: () => 'second',
+      wordPool: pool,
+    })
+
+    expect(pool).toContain(replacement.word)
+    expect(replacement.word).not.toBe(current.word)
+  })
+
+  it('getOrCreateTodaysPrompt returns the replacement, not the skipped original, on reload', async () => {
+    const repo = new InMemoryPromptRepository()
+    const morning = new Date(2026, 6, 5, 9, 0).toISOString()
+    const noon = new Date(2026, 6, 5, 12, 0).toISOString()
+
+    const current = await getOrCreateTodaysPrompt(repo, { ...deps(morning), generateId: () => 'first' })
+    const replacement = await skipTodaysPrompt(repo, current, { ...deps(noon), generateId: () => 'second' })
+
+    const reloaded = await getOrCreateTodaysPrompt(repo, { ...deps(noon), generateId: () => 'third' })
+    expect(reloaded.id).toBe(replacement.id)
+    expect(repo.prompts).toHaveLength(2)
   })
 })
 

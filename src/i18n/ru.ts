@@ -47,6 +47,8 @@ export const ru: Dictionary = {
     openFullForm: 'Хотите добавить больше? Откройте полную форму',
     keptTodayPrefix: 'Сохранено сегодня —',
     whenToggle: 'Когда это было, примерно?',
+    skipWord: 'Это слово сегодня не откликается? Попробуйте другое',
+    neverShowAgain: 'Больше не показывать это слово',
   },
   memories: {
     loading: 'Перелистываем страницы…',
@@ -142,6 +144,10 @@ export const ru: Dictionary = {
       'От этого выбора зависят меню, кнопки и новые слова дня. Уже написанные воспоминания сохраняют те слова, с которыми были написаны.',
     languageEnglish: 'English',
     languageRussian: 'Русский',
+    hiddenWordsTitle: 'Скрытые слова',
+    hiddenWordsDescription:
+      'Слова, которые вы решили больше не видеть. Любое из них можно вернуть.',
+    restoreWord: 'Вернуть',
   },
   exportPage: {
     title: 'Экспорт',

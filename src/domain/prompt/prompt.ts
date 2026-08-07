@@ -5,4 +5,6 @@ export interface Prompt {
   id: EntityId
   word: string
   createdAt: IsoDateString
+  /** Set when the user chose "skip this word for now" (#27) — no longer today's active prompt. */
+  skipped?: boolean
 }

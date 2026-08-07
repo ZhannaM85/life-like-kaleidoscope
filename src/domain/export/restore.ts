@@ -48,6 +48,14 @@ const promptSchema = z.object({
   id: entityIdSchema,
   word: z.string(),
   createdAt: isoDateStringSchema,
+  skipped: z.boolean().optional(),
+})
+
+const blockedWordSchema = z.object({
+  id: entityIdSchema,
+  word: z.string(),
+  locale: z.enum(['en', 'ru']),
+  blockedAt: isoDateStringSchema,
 })
 
 const personSchema = z.object({
@@ -83,6 +91,7 @@ export const backupFileSchema = z.object({
     places: z.array(placeSchema),
     tags: z.array(tagSchema),
     photos: z.array(backupPhotoSchema),
+    blockedWords: z.array(blockedWordSchema),
   }),
 })
 

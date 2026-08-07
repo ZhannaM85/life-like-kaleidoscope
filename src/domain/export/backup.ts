@@ -6,7 +6,7 @@ import type {
   Photo,
   PhotoRepository,
 } from '@/domain/memory'
-import type { Prompt, PromptRepository } from '@/domain/prompt'
+import type { Prompt, PromptRepository, BlockedWord, BlockedWordRepository } from '@/domain/prompt'
 import type { Person, PersonRepository } from '@/domain/person'
 import type { Place, PlaceRepository } from '@/domain/place'
 import type { Tag, TagRepository } from '@/domain/tag'
@@ -39,6 +39,7 @@ export interface BackupFile {
     places: Place[]
     tags: Tag[]
     photos: BackupPhoto[]
+    blockedWords: BlockedWord[]
   }
 }
 
@@ -51,6 +52,7 @@ export interface BackupSources {
   places: PlaceRepository
   tags: TagRepository
   userProfile: UserProfileRepository
+  blockedWords: BlockedWordRepository
 }
 
 async function blobToBase64(blob: Blob): Promise<string> {
@@ -69,13 +71,14 @@ export async function collectBackup(
   sources: BackupSources,
   deps: { now: Now }
 ): Promise<BackupFile> {
-  const [memories, prompts, people, places, tags, userProfile] = await Promise.all([
+  const [memories, prompts, people, places, tags, userProfile, blockedWords] = await Promise.all([
     sources.memories.getAll(),
     sources.prompts.getAll(),
     sources.people.getAll(),
     sources.places.getAll(),
     sources.tags.getAll(),
     sources.userProfile.get(),
+    sources.blockedWords.getAll(),
   ])
 
   const memoryVersions: MemoryVersion[] = []
@@ -104,6 +107,7 @@ export async function collectBackup(
       places,
       tags,
       photos,
+      blockedWords,
     },
   }
 }

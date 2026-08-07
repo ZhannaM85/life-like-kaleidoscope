@@ -83,7 +83,10 @@ export interface DailyPromptDeps {
 
 /**
  * Idempotent per local day: returns the prompt already issued today, or
- * chooses a word, persists a new Prompt, and returns it.
+ * chooses a word, persists a new Prompt, and returns it. When today's word
+ * has been skipped (#27), the original issuance stays in history marked
+ * `skipped` — the most recently issued *non-skipped* prompt for today is the
+ * active one.
  */
 export async function getOrCreateTodaysPrompt(
   repository: PromptRepository,
@@ -93,7 +96,9 @@ export async function getOrCreateTodaysPrompt(
   const todayKey = localDateKey(new Date(nowIso))
 
   const all = await repository.getAll()
-  const existing = all.find((p) => localDateKey(new Date(p.createdAt)) === todayKey)
+  const existing = all
+    .filter((p) => !p.skipped && localDateKey(new Date(p.createdAt)) === todayKey)
+    .at(-1)
   if (existing) return existing
 
   const lastUsed = new Map<string, string>()
@@ -110,6 +115,40 @@ export async function getOrCreateTodaysPrompt(
   })
 
   const prompt: Prompt = { id: deps.generateId(), word, createdAt: nowIso }
+  await repository.save(prompt)
+  return prompt
+}
+
+/**
+ * "Skip this word for now" (#27): marks `current` skipped and issues a
+ * replacement, persisted so a reload keeps the replacement. The skipped
+ * word's issuance timestamp is still today, so it naturally stays out of the
+ * no-repeat window without any special-casing — the same eligibility logic
+ * `chooseDailyWord` already applies to every other recently-used word.
+ */
+export async function skipTodaysPrompt(
+  repository: PromptRepository,
+  current: Prompt,
+  deps: DailyPromptDeps
+): Promise<Prompt> {
+  const todayKey = localDateKey(new Date(current.createdAt))
+  await repository.save({ ...current, skipped: true })
+
+  const all = await repository.getAll()
+  const lastUsed = new Map<string, string>()
+  for (const p of all) {
+    const prev = lastUsed.get(p.word)
+    if (!prev || prev < p.createdAt) lastUsed.set(p.word, p.createdAt)
+  }
+
+  const word = chooseDailyWord({
+    dateKey: todayKey,
+    lastUsed,
+    windowDays: deps.windowDays,
+    wordPool: deps.wordPool,
+  })
+
+  const prompt: Prompt = { id: deps.generateId(), word, createdAt: deps.now() }
   await repository.save(prompt)
   return prompt
 }

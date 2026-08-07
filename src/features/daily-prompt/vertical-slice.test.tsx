@@ -25,6 +25,7 @@ beforeEach(() => {
     draftApproxYear: '',
     draftMood: undefined,
     status: 'idle',
+    skipping: false,
     error: null,
   })
   useMemoriesStore.setState({ memories: [], promptsById: {}, status: 'idle', error: null })
@@ -230,5 +231,74 @@ describe('vertical slice: prompt → write → save → memories list', () => {
     )
     const word2 = (await screen.findByRole('heading', { level: 1 })).textContent
     expect(word2).toBe(word1)
+  })
+
+  it('skips today\'s word for a different one, revealing "never show again" only after that (#27)', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <TodayPage />
+      </MemoryRouter>
+    )
+    const word1 = (await screen.findByRole('heading', { level: 1 })).textContent
+
+    expect(
+      screen.queryByRole('button', { name: 'Never show this word again' })
+    ).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: "This word isn't landing today? Try another" }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 1 }).textContent).not.toBe(word1)
+    })
+    expect(
+      screen.getByRole('button', { name: 'Never show this word again' })
+    ).toBeInTheDocument()
+  })
+
+  it('blocks the word behind "never show again" so it is never issued again (#27)', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <TodayPage />
+      </MemoryRouter>
+    )
+    await screen.findByRole('heading', { level: 1 })
+    await user.click(screen.getByRole('button', { name: "This word isn't landing today? Try another" }))
+    // The link only appears once `skipPrompt` has resolved and the store has
+    // the replacement word — waiting for it avoids reading stale heading text.
+    await screen.findByRole('button', { name: 'Never show this word again' })
+    const blockedWord = screen.getByRole('heading', { level: 1 }).textContent
+
+    await user.click(screen.getByRole('button', { name: 'Never show this word again' }))
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 1 }).textContent).not.toBe(blockedWord)
+    })
+
+    const { getRepositories } = await import('@/stores')
+    const blocked = await getRepositories().blockedWords.getAll()
+    expect(blocked.map((w) => w.word)).toContain(blockedWord)
+  })
+
+  it('hides the skip and never-again links once a memory has been written today', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <TodayPage />
+      </MemoryRouter>
+    )
+    await screen.findByRole('heading', { level: 1 })
+    await user.type(
+      screen.getByLabelText('A memory this word brings back'),
+      'Written before deciding to skip anything.'
+    )
+    await user.click(screen.getByRole('button', { name: 'Keep this memory' }))
+
+    await waitFor(() => {
+      expect(useDailyPromptStore.getState().todaysMemories).toHaveLength(1)
+    })
+    expect(
+      screen.queryByRole('button', { name: "This word isn't landing today? Try another" })
+    ).not.toBeInTheDocument()
   })
 })

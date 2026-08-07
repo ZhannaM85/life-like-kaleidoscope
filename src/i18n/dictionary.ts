@@ -47,6 +47,8 @@ export interface Dictionary {
     openFullForm: string
     keptTodayPrefix: string
     whenToggle: string
+    skipWord: string
+    neverShowAgain: string
   }
   memories: {
     loading: string
@@ -133,6 +135,9 @@ export interface Dictionary {
     languageDescription: string
     languageEnglish: string
     languageRussian: string
+    hiddenWordsTitle: string
+    hiddenWordsDescription: string
+    restoreWord: string
   }
   exportPage: {
     title: string
