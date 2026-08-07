@@ -4,6 +4,7 @@ import { BookOpen } from 'lucide-react'
 import { editMemory, type MemoryEdit } from '@/domain/memory'
 import { defaultGenerateId, nowIso } from '@/domain/shared'
 import { getRepositories, useLocaleStore } from '@/stores'
+import { allocatePhotos, persistPhotos, type PhotoChanges } from '@/features/photos'
 import { EmptyState } from '@/shared/ui/empty-state'
 import { PageHeader } from '@/shared/ui/page-header'
 import { MemoryForm } from './MemoryForm'
@@ -43,7 +44,7 @@ export function MemoryEditPage() {
     }
   }, [id])
 
-  async function save(values: MemoryFormValues) {
+  async function save(values: MemoryFormValues, photoChanges: PhotoChanges) {
     if (!context) return
     setStatus('saving')
     setError(null)
@@ -55,6 +56,14 @@ export function MemoryEditPage() {
         repos,
         defaultGenerateId
       )
+      // New blobs are saved before the memory update, and removed ones only
+      // deleted after it succeeds — a failed update never leaves the memory
+      // referencing a photo id that's already gone.
+      const photoAllocations = allocatePhotos(photoChanges.newFiles, defaultGenerateId)
+      await persistPhotos(repos.photos, context.memory.id, photoAllocations)
+      const keptPhotoIds = context.photos
+        .map((p) => p.id)
+        .filter((id) => !photoChanges.removedPhotoIds.includes(id))
       const edit: MemoryEdit = {
         title: fields.title,
         story: fields.story,
@@ -64,12 +73,14 @@ export function MemoryEditPage() {
         peopleIds,
         placeIds,
         tagIds,
+        photoIds: [...keptPhotoIds, ...photoAllocations.map((a) => a.id)],
       }
       const updated = editMemory(context.memory, edit, {
         generateId: defaultGenerateId,
         now: nowIso,
       })
       await repos.memories.update(updated)
+      await Promise.all(photoChanges.removedPhotoIds.map((id) => repos.photos.delete(id)))
       navigate(`/memories/${context.memory.id}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -128,11 +139,12 @@ export function MemoryEditPage() {
           places: context.placeNames.join(', '),
           tags: context.tagLabels.join(', '),
         }}
+        initialPhotos={context.photos}
         submitLabel={t.memoryEdit.saveChanges}
         savingLabel={t.common.saving}
         saving={status === 'saving'}
         cancelTo={`/memories/${memory.id}`}
-        onSubmit={(values) => void save(values)}
+        onSubmit={(values, photoChanges) => void save(values, photoChanges)}
       />
     </div>
   )

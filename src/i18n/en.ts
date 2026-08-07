@@ -73,6 +73,10 @@ export const en: Dictionary = {
     storyRequired: 'A memory needs at least a few words.',
     ageRange: 'If you give an age, make it a whole number between 0 and 120.',
     yearFourDigit: 'If you give a year, make it a four-digit year.',
+    photosLabel: 'Photos',
+    photosHint: 'Optional — attach a photo or two.',
+    addPhotos: 'Add photos',
+    removePhoto: 'Remove photo',
   },
   mood: {
     question: 'How does this memory feel?',

@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto'
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
@@ -19,6 +19,9 @@ import { VersionHistoryPage } from '@/features/version-history/VersionHistoryPag
 let dbCounter = 0
 let dbName: string
 
+/** jsdom implements neither createObjectURL nor revokeObjectURL — stub both. */
+let objectUrlCounter = 0
+
 beforeEach(() => {
   dbName = `crud-db-${++dbCounter}`
   setRepositories(createIndexedDbRepositories(dbName))
@@ -30,6 +33,8 @@ beforeEach(() => {
     error: null,
   })
   useMemoriesStore.setState({ memories: [], promptsById: {}, status: 'idle', error: null })
+  URL.createObjectURL = vi.fn(() => `blob:test-${++objectUrlCounter}`) as typeof URL.createObjectURL
+  URL.revokeObjectURL = vi.fn()
 })
 
 afterEach(async () => {
@@ -60,6 +65,22 @@ async function seedMemory(story = 'The dacha smelled of raspberries.') {
     { generateId: defaultGenerateId, now: () => now }
   )
   await repos.memories.create(created)
+  return created.memory
+}
+
+async function seedMemoryWithPhoto(story = 'The dacha smelled of raspberries.') {
+  const repos = getRepositories()
+  const now = new Date().toISOString()
+  await repos.prompts.save({ id: 'seed-prompt', word: 'Raspberry', createdAt: now })
+  const created = createMemory(
+    { promptId: 'seed-prompt', story, authoredBy: 'seed-user', photoIds: ['photo-seed-1'] },
+    { generateId: defaultGenerateId, now: () => now }
+  )
+  await repos.memories.create(created)
+  await repos.photos.save(
+    { id: 'photo-seed-1', memoryId: created.memory.id, blobRef: 'blob-seed-1' },
+    new Blob(['seed-bytes'], { type: 'image/png' })
+  )
   return created.memory
 }
 
@@ -161,5 +182,58 @@ describe('memory CRUD & version history (Epic 4)', () => {
 
     renderAt('/memories/does-not-exist/history')
     expect(await screen.findByText("This memory isn't here")).toBeInTheDocument()
+  })
+
+  it('attaches a photo when creating a memory, shown on the detail page (Epic 5)', async () => {
+    const user = userEvent.setup()
+    renderAt('/memories/new')
+    await screen.findByText('New memory')
+    await user.type(screen.getByLabelText('The memory'), 'A photo from the porch.')
+
+    const file = new File(['fake-bytes'], 'porch.png', { type: 'image/png' })
+    await user.upload(screen.getByLabelText('Add photos'), file)
+    expect(await screen.findAllByAltText('')).toHaveLength(1)
+
+    await user.click(screen.getByRole('button', { name: 'Keep this memory' }))
+
+    expect(await screen.findByText('A photo from the porch.')).toBeInTheDocument()
+    const images = await screen.findAllByAltText('')
+    expect(images).toHaveLength(1)
+    expect(images[0]).toHaveAttribute('src')
+
+    const repos = getRepositories()
+    const [memory] = await repos.memories.getAll()
+    expect(memory.photoIds).toHaveLength(1)
+    expect(await repos.photos.getByMemoryId(memory.id)).toHaveLength(1)
+  })
+
+  it('adds and removes photos on edit (Epic 5)', async () => {
+    const user = userEvent.setup()
+    const memory = await seedMemoryWithPhoto()
+    renderAt(`/memories/${memory.id}/edit`)
+
+    await screen.findByLabelText('The memory')
+    expect(await screen.findAllByAltText('')).toHaveLength(1)
+
+    await user.click(screen.getByRole('button', { name: 'Remove photo' }))
+    expect(screen.queryAllByAltText('')).toHaveLength(0)
+
+    const file = new File(['new-bytes'], 'new.png', { type: 'image/png' })
+    await user.upload(screen.getByLabelText('Add photos'), file)
+    expect(await screen.findAllByAltText('')).toHaveLength(1)
+
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    // Wait for the save to fully land (navigation back to the detail page)
+    // before inspecting the repository — clicking only awaits dispatch, not
+    // the full async save chain.
+    await screen.findByText('The dacha smelled of raspberries.')
+
+    const repos = getRepositories()
+    const updated = await repos.memories.getById(memory.id)
+    expect(updated?.photoIds).toHaveLength(1)
+    expect(updated?.photoIds[0]).not.toBe('photo-seed-1')
+    expect(await repos.photos.getById('photo-seed-1')).toBeUndefined()
+    expect(await repos.photos.getByMemoryId(memory.id)).toHaveLength(1)
   })
 })

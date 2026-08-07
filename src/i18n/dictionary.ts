@@ -74,6 +74,10 @@ export interface Dictionary {
     storyRequired: string
     ageRange: string
     yearFourDigit: string
+    photosLabel: string
+    photosHint: string
+    addPhotos: string
+    removePhoto: string
   }
   mood: {
     question: string

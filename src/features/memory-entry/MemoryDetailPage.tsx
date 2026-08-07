@@ -4,10 +4,14 @@ import { BookOpen, History, Pencil } from 'lucide-react'
 import { getRepositories, useLocaleStore } from '@/stores'
 import { localeTag, type Locale } from '@/i18n'
 import { cn } from '@/shared/lib/utils'
+import { usePhotoPreviews } from '@/shared/hooks'
+import type { Photo } from '@/domain/memory'
 import { Button, buttonVariants } from '@/shared/ui/button'
 import { EmptyState } from '@/shared/ui/empty-state'
 import { PageHeader } from '@/shared/ui/page-header'
 import { loadMemoryContext, type MemoryContext } from './memory-context'
+
+const NO_PHOTOS: Photo[] = []
 
 function onDate(iso: string, locale: Locale) {
   return new Date(iso).toLocaleDateString(localeTag(locale), {
@@ -41,6 +45,7 @@ export function MemoryDetailPage() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'missing' | 'error'>('loading')
   const [error, setError] = useState<string | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const photoPreviews = usePhotoPreviews(context?.photos ?? NO_PHOTOS)
 
   useEffect(() => {
     let cancelled = false
@@ -135,6 +140,20 @@ export function MemoryDetailPage() {
       />
 
       <p className="m-0 whitespace-pre-wrap leading-relaxed">{memory.story}</p>
+
+      {photoPreviews.length > 0 && (
+        <ul className="flex flex-wrap gap-3">
+          {photoPreviews.map((photo) => (
+            <li key={photo.id}>
+              <img
+                src={photo.url}
+                alt={photo.caption ?? ''}
+                className="h-40 w-40 rounded-md border border-border object-cover"
+              />
+            </li>
+          ))}
+        </ul>
+      )}
 
       {hasDetails && (
         <dl className="m-0 flex flex-col gap-1.5 border-t border-border pt-4 font-sans text-sm text-muted-foreground">

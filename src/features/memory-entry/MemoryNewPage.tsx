@@ -4,6 +4,7 @@ import { createMemory } from '@/domain/memory'
 import { defaultGenerateId, nowIso } from '@/domain/shared'
 import { ensureUserProfile } from '@/domain/user'
 import { getRepositories, useDailyPromptStore, useLocaleStore } from '@/stores'
+import { allocatePhotos, persistPhotos, type PhotoChanges } from '@/features/photos'
 import { PageHeader } from '@/shared/ui/page-header'
 import { MemoryForm } from './MemoryForm'
 import { memoryFieldsFromValues, resolveEntityIds, type MemoryFormValues } from './memory-form'
@@ -25,7 +26,7 @@ export function MemoryNewPage() {
     void load()
   }, [load])
 
-  async function save(values: MemoryFormValues) {
+  async function save(values: MemoryFormValues, photoChanges: PhotoChanges) {
     if (!prompt) return
     setSaving(true)
     setError(null)
@@ -38,6 +39,10 @@ export function MemoryNewPage() {
         defaultGenerateId
       )
       const profile = await ensureUserProfile(repos.userProfile, { generateId: defaultGenerateId })
+      // Photo ids are allocated before creation so the memory's very first
+      // version already carries the final photoIds — same reasoning as
+      // resolving people/place/tag ids before createMemory runs.
+      const photoAllocations = allocatePhotos(photoChanges.newFiles, defaultGenerateId)
       const created = createMemory(
         {
           promptId: prompt.id,
@@ -49,11 +54,13 @@ export function MemoryNewPage() {
           peopleIds,
           placeIds,
           tagIds,
+          photoIds: photoAllocations.map((a) => a.id),
           authoredBy: profile.id,
         },
         { generateId: defaultGenerateId, now: nowIso }
       )
       await repos.memories.create(created)
+      await persistPhotos(repos.photos, created.memory.id, photoAllocations)
       navigate(`/memories/${created.memory.id}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -96,7 +103,7 @@ export function MemoryNewPage() {
         savingLabel={t.common.saving}
         saving={saving}
         cancelTo="/memories"
-        onSubmit={(values) => void save(values)}
+        onSubmit={(values, photoChanges) => void save(values, photoChanges)}
       />
     </div>
   )
