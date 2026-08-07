@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { AppShell } from '@/app/AppShell'
 import { TodayPage } from '@/features/daily-prompt/TodayPage'
+import { WordGalleryPage } from '@/features/daily-prompt/WordGalleryPage'
 import { MemoriesPage } from '@/features/memory-entry/MemoriesPage'
 import { MemoryDetailPage } from '@/features/memory-entry/MemoryDetailPage'
 import { MemoryEditPage } from '@/features/memory-entry/MemoryEditPage'
@@ -19,6 +20,7 @@ const router = createBrowserRouter(
       element: <AppShell />,
       children: [
         { index: true, element: <TodayPage /> },
+        { path: 'today/words', element: <WordGalleryPage /> },
         { path: 'memories', element: <MemoriesPage /> },
         { path: 'memories/new', element: <MemoryNewPage /> },
         { path: 'memories/:id', element: <MemoryDetailPage /> },

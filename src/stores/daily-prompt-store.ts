@@ -4,6 +4,7 @@ import type { Memory, Mood } from '@/domain/memory'
 import {
   getOrCreateTodaysPrompt,
   skipTodaysPrompt,
+  pickTodaysWord,
   getWordPool,
   localDateKey,
   excludeBlocked,
@@ -16,8 +17,12 @@ import { getRepositories } from './repositories'
 import { useLocaleStore } from './locale-store'
 import type { Locale } from '@/domain/prompt'
 
-/** The active locale's curated pool plus "Your words" (#28), minus anything blocked (#27). */
-async function effectiveWordPool(locale: Locale): Promise<readonly string[]> {
+/**
+ * The active locale's curated pool plus "Your words" (#28), minus anything
+ * blocked (#27) — the same effective pool both the daily draw and the word
+ * gallery (#31) work from.
+ */
+export async function effectiveWordPool(locale: Locale): Promise<readonly string[]> {
   const { blockedWords, customWords } = getRepositories()
   const [blocked, custom] = await Promise.all([blockedWords.getAll(), customWords.getAll()])
   const pool = [...getWordPool(locale), ...custom.map((c) => c.word)]
@@ -48,6 +53,8 @@ interface DailyPromptState {
   skipPrompt: () => Promise<void>
   /** "Never show this word again" (#27) — blocks the current word, then skips to a replacement. */
   blockWord: () => Promise<void>
+  /** "…or choose a word yourself" (#31) — makes `word` today's word, clears the in-progress draft. */
+  chooseWord: (word: string) => Promise<void>
 }
 
 export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
@@ -189,5 +196,28 @@ export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
       return
     }
     await get().skipPrompt()
+  },
+
+  async chooseWord(word) {
+    const { prompt } = get()
+    if (!prompt || word === prompt.word) return
+    const { prompts } = getRepositories()
+    set({ skipping: true, error: null })
+    try {
+      const next = await pickTodaysWord(prompts, prompt, word, {
+        generateId: defaultGenerateId,
+        now: nowIso,
+      })
+      set({
+        prompt: next,
+        draft: '',
+        draftApproxAge: '',
+        draftApproxYear: '',
+        draftMood: undefined,
+        skipping: false,
+      })
+    } catch (e) {
+      set({ skipping: false, error: e instanceof Error ? e.message : String(e) })
+    }
   },
 }))

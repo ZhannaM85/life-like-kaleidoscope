@@ -4,6 +4,7 @@ export {
   chooseDailyWord,
   getOrCreateTodaysPrompt,
   skipTodaysPrompt,
+  pickTodaysWord,
   localDateKey,
   DEFAULT_NO_REPEAT_WINDOW_DAYS,
   type ChooseDailyWordArgs,

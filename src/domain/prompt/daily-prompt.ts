@@ -152,3 +152,22 @@ export async function skipTodaysPrompt(
   await repository.save(prompt)
   return prompt
 }
+
+/**
+ * "…or choose a word yourself" (#31): marks `current` skipped and issues the
+ * explicitly chosen replacement, persisted — same idempotence-by-persistence
+ * as `skipTodaysPrompt`, but the word is given rather than drawn. The chosen
+ * word's issuance timestamp still counts toward the no-repeat window like any
+ * dealt word, so no special-casing is needed there either.
+ */
+export async function pickTodaysWord(
+  repository: PromptRepository,
+  current: Prompt,
+  word: string,
+  deps: Pick<DailyPromptDeps, 'generateId' | 'now'>
+): Promise<Prompt> {
+  await repository.save({ ...current, skipped: true })
+  const prompt: Prompt = { id: deps.generateId(), word, createdAt: deps.now() }
+  await repository.save(prompt)
+  return prompt
+}

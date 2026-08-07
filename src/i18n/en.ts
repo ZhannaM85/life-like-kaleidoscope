@@ -48,6 +48,7 @@ export const en: Dictionary = {
     whenToggle: 'When was this, roughly?',
     skipWord: "This word isn't landing today? Try another",
     neverShowAgain: 'Never show this word again',
+    chooseWordLink: 'or choose a word yourself',
   },
   memories: {
     loading: 'Turning the pages…',
@@ -204,6 +205,11 @@ export const en: Dictionary = {
   },
   graphPage: {
     title: 'Memory Graph',
+  },
+  wordGallery: {
+    title: 'Word gallery',
+    description: "Every word available today — pick one and it becomes today's word.",
+    loading: 'Gathering the words…',
   },
   placeholder: {
     comingSoon: 'Coming in a future epic.',

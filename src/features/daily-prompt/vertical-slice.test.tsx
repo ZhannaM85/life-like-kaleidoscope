@@ -2,13 +2,14 @@ import 'fake-indexeddb/auto'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, createMemoryRouter, RouterProvider } from 'react-router-dom'
 import {
   createIndexedDbRepositories,
   LifeLikeKaleidoscopeDb,
 } from '@/infrastructure/persistence/indexeddb'
-import { setRepositories, useDailyPromptStore, useMemoriesStore } from '@/stores'
+import { setRepositories, getRepositories, useDailyPromptStore, useMemoriesStore } from '@/stores'
 import { TodayPage } from './TodayPage'
+import { WordGalleryPage } from './WordGalleryPage'
 import { MemoriesPage } from '@/features/memory-entry/MemoriesPage'
 
 let dbCounter = 0
@@ -302,5 +303,66 @@ describe('vertical slice: prompt → write → save → memories list', () => {
     expect(
       screen.queryByRole('button', { name: "This word isn't landing today? Try another" })
     ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: 'or choose a word yourself' })
+    ).not.toBeInTheDocument()
+  })
+
+  it('opens the word gallery, picks a word, and it becomes today\'s word (#31)', async () => {
+    // A custom word guarantees a pick that differs from whatever curated
+    // word the hash-based daily draw happened to land on.
+    await getRepositories().customWords.save({
+      id: 'custom-1',
+      word: 'Zeppelin',
+      createdAt: '2026-07-01T00:00:00.000Z',
+    })
+    const user = userEvent.setup()
+    const router = createMemoryRouter(
+      [
+        { path: '/', element: <TodayPage /> },
+        { path: '/today/words', element: <WordGalleryPage /> },
+      ],
+      { initialEntries: ['/'] }
+    )
+    render(<RouterProvider router={router} />)
+    await screen.findByRole('heading', { level: 1 })
+
+    await user.click(screen.getByRole('link', { name: 'or choose a word yourself' }))
+    expect(await screen.findByText('Word gallery')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Zeppelin' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Zeppelin')
+    })
+    // The gallery visit doesn't leave a stray word in the URL history — back on Today.
+    expect(router.state.location.pathname).toBe('/')
+  })
+
+  it('lists every effective word in the gallery, alphabetically, excluding blocked ones', async () => {
+    await getRepositories().blockedWords.save({
+      id: 'blocked-1',
+      word: 'Bicycle',
+      locale: 'en',
+      blockedAt: '2026-07-01T00:00:00.000Z',
+    })
+    await getRepositories().customWords.save({
+      id: 'custom-1',
+      word: 'Zeppelin',
+      createdAt: '2026-07-01T00:00:00.000Z',
+    })
+
+    render(
+      <MemoryRouter>
+        <WordGalleryPage />
+      </MemoryRouter>
+    )
+
+    const zeppelin = await screen.findByRole('button', { name: 'Zeppelin' })
+    expect(zeppelin).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Bicycle' })).not.toBeInTheDocument()
+
+    const words = screen.getAllByRole('button').map((el) => el.textContent)
+    expect(words).toEqual([...words].sort((a, b) => a!.localeCompare(b!, 'en-US')))
   })
 })

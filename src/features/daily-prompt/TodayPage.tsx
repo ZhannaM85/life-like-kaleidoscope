@@ -85,14 +85,25 @@ export function TodayPage() {
         <h1 className="text-5xl font-medium tracking-tight text-foreground">{prompt.word}</h1>
         {todaysMemories.length === 0 && (
           <div className="flex flex-col items-center gap-1 pt-1">
-            <button
-              type="button"
-              onClick={() => void handleSkip()}
-              disabled={skipping}
-              className="font-sans text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground disabled:opacity-50"
-            >
-              {t.today.skipWord}
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+              <button
+                type="button"
+                onClick={() => void handleSkip()}
+                disabled={skipping}
+                className="font-sans text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground disabled:opacity-50"
+              >
+                {t.today.skipWord}
+              </button>
+              <span aria-hidden className="text-sm text-muted-foreground/50">
+                ·
+              </span>
+              <Link
+                to="/today/words"
+                className="font-sans text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
+              >
+                {t.today.chooseWordLink}
+              </Link>
+            </div>
             {hasSkipped && (
               <button
                 type="button"

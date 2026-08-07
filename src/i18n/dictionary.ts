@@ -49,6 +49,7 @@ export interface Dictionary {
     whenToggle: string
     skipWord: string
     neverShowAgain: string
+    chooseWordLink: string
   }
   memories: {
     loading: string
@@ -187,6 +188,11 @@ export interface Dictionary {
   }
   graphPage: {
     title: string
+  }
+  wordGallery: {
+    title: string
+    description: string
+    loading: string
   }
   placeholder: {
     comingSoon: string

@@ -49,6 +49,7 @@ export const ru: Dictionary = {
     whenToggle: 'Когда это было, примерно?',
     skipWord: 'Это слово сегодня не откликается? Попробуйте другое',
     neverShowAgain: 'Больше не показывать это слово',
+    chooseWordLink: 'или выберите слово сами',
   },
   memories: {
     loading: 'Перелистываем страницы…',
@@ -205,6 +206,11 @@ export const ru: Dictionary = {
   },
   graphPage: {
     title: 'Граф памяти',
+  },
+  wordGallery: {
+    title: 'Галерея слов',
+    description: 'Все слова, доступные сегодня, — выберите любое, и оно станет словом дня.',
+    loading: 'Собираем слова…',
   },
   placeholder: {
     comingSoon: 'Скоро появится в одном из будущих обновлений.',

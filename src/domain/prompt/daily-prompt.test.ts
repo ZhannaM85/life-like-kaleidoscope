@@ -5,6 +5,7 @@ import {
   chooseDailyWord,
   getOrCreateTodaysPrompt,
   skipTodaysPrompt,
+  pickTodaysWord,
   localDateKey,
   DEFAULT_NO_REPEAT_WINDOW_DAYS,
 } from './daily-prompt'
@@ -176,6 +177,42 @@ describe('skipTodaysPrompt', () => {
     const reloaded = await getOrCreateTodaysPrompt(repo, { ...deps(noon), generateId: () => 'third' })
     expect(reloaded.id).toBe(replacement.id)
     expect(repo.prompts).toHaveLength(2)
+  })
+})
+
+describe('pickTodaysWord', () => {
+  it('marks the current prompt skipped and issues the explicitly chosen word', async () => {
+    const repo = new InMemoryPromptRepository()
+    const morning = new Date(2026, 6, 5, 9, 0).toISOString()
+    const later = new Date(2026, 6, 5, 9, 5).toISOString()
+
+    const current = await getOrCreateTodaysPrompt(repo, { ...deps(morning), generateId: () => 'first' })
+    const chosen = await pickTodaysWord(repo, current, 'Comb', {
+      ...deps(later),
+      generateId: () => 'second',
+    })
+
+    expect(chosen.id).toBe('second')
+    expect(chosen.word).toBe('Comb')
+    expect(chosen.skipped).toBeFalsy()
+
+    const stored = await repo.getById(current.id)
+    expect(stored?.skipped).toBe(true)
+  })
+
+  it('getOrCreateTodaysPrompt returns the chosen word, not the original, on reload', async () => {
+    const repo = new InMemoryPromptRepository()
+    const morning = new Date(2026, 6, 5, 9, 0).toISOString()
+
+    const current = await getOrCreateTodaysPrompt(repo, { ...deps(morning), generateId: () => 'first' })
+    const chosen = await pickTodaysWord(repo, current, 'Comb', {
+      ...deps(morning),
+      generateId: () => 'second',
+    })
+
+    const reloaded = await getOrCreateTodaysPrompt(repo, { ...deps(morning), generateId: () => 'third' })
+    expect(reloaded.id).toBe(chosen.id)
+    expect(reloaded.word).toBe('Comb')
   })
 })
 
