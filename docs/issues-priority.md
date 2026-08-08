@@ -63,7 +63,7 @@ _Any order from here, but keep each epic its own reviewable unit of work. Sugges
 | ~~[#7](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/7)~~ | ~~Epic 6 — Search~~ | Done ✓ — pure `searchMemories` (domain/search) filters live as you type across prompt word, title, story, people, places, tags; blank query invites typing rather than dumping the whole archive |
 | ~~[#8](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/8)~~ | ~~Epic 7 — Timeline~~ | Done ✓ — `buildTimeline` (domain/timeline) groups by `approxYear`; a List/Timeline toggle on `/memories` (the brief's routing table treats them as one screen); undated memories get their own section, never dropped |
 | ~~[#9](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/9)~~ | ~~Epic 8 — Memory graph (basic)~~ | Done ✓ — `buildMemoryGraph` (domain/memory-graph) + a two-ring static SVG render (`layoutMemoryGraph`, no physics sim); rich interactive explorer deferred as scoped |
-| [#10](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/10) | Epic 9 — Annual reflection | Reveal last year's memory only after writing today's — depends on #4 |
+| ~~[#10](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/10)~~ | ~~Epic 9 — Annual reflection~~ | Done ✓ — `findAnniversaryPrompt` (domain/annual-reflection) detects a same-word issuance ~1 year ago (±14 days); Today reveals it only once today's own memory is saved, never as a preview |
 | [#13](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/13) | Epic 10 — Random memory | "On this day N years ago" + random fallback |
 
 ---

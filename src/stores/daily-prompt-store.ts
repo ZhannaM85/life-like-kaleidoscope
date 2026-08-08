@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import type { Prompt } from '@/domain/prompt'
-import type { Memory, Mood } from '@/domain/memory'
+import type { Prompt, PromptRepository } from '@/domain/prompt'
+import type { Memory, MemoryRepository, Mood } from '@/domain/memory'
 import {
   getOrCreateTodaysPrompt,
   skipTodaysPrompt,
@@ -12,11 +12,29 @@ import {
 } from '@/domain/prompt'
 import { createMemory } from '@/domain/memory'
 import { ensureUserProfile } from '@/domain/user'
+import { findAnniversaryPrompt } from '@/domain/annual-reflection'
 import { defaultGenerateId, nowIso } from '@/domain/shared'
 import { intInRangeError, optionalNumber } from '@/features/memory-entry/memory-form'
 import { getRepositories } from './repositories'
 import { useLocaleStore } from './locale-store'
 import type { Locale } from '@/domain/prompt'
+
+/**
+ * "This word came around about a year ago, too" (#9): every memory written
+ * against the same word's closest issuance to exactly one year before
+ * today, if one exists. Cheap to call even on the common no-match day —
+ * `getByPromptId` only runs when an anniversary issuance was actually found.
+ */
+async function loadAnnualReflection(
+  prompts: PromptRepository,
+  memories: MemoryRepository,
+  word: string,
+  currentPromptId: string
+): Promise<Memory[]> {
+  const pastIssuances = (await prompts.getByWord(word)).filter((p) => p.id !== currentPromptId)
+  const anniversary = findAnniversaryPrompt(pastIssuances, new Date())
+  return anniversary ? memories.getByPromptId(anniversary.id) : []
+}
 
 /**
  * The active locale's curated pool plus "Your words" (#28), minus anything
@@ -34,6 +52,8 @@ interface DailyPromptState {
   prompt: Prompt | null
   /** Memories already written for today's prompt (there may be several). */
   todaysMemories: Memory[]
+  /** Last year's memories for this same word (#9) — populated only once `todaysMemories` is non-empty. */
+  lastYearMemories: Memory[]
   draft: string
   /** Optional, quiet "when was this, roughly?" guesses (#25) — raw strings, same shape as the full form. */
   draftApproxAge: string
@@ -61,6 +81,7 @@ interface DailyPromptState {
 export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
   prompt: null,
   todaysMemories: [],
+  lastYearMemories: [],
   draft: '',
   draftApproxAge: '',
   draftApproxYear: '',
@@ -111,7 +132,12 @@ export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
         }
       }
 
-      set({ prompt, todaysMemories, status: 'ready' })
+      const lastYearMemories =
+        todaysMemories.length > 0
+          ? await loadAnnualReflection(prompts, memories, prompt.word, prompt.id)
+          : []
+
+      set({ prompt, todaysMemories, lastYearMemories, status: 'ready' })
     } catch (e) {
       set({ status: 'error', error: e instanceof Error ? e.message : String(e) })
     }
@@ -140,7 +166,7 @@ export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
     if (intInRangeError(draftApproxAge, 0, 120, '') || intInRangeError(draftApproxYear, 1000, 9999, ''))
       return
 
-    const { memories, userProfile } = getRepositories()
+    const { memories, prompts, userProfile } = getRepositories()
     set({ status: 'saving', error: null })
     try {
       const profile = await ensureUserProfile(userProfile, { generateId: defaultGenerateId })
@@ -156,8 +182,12 @@ export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
         { generateId: defaultGenerateId, now: nowIso }
       )
       await memories.create(created)
+      // Only surfaced once a memory exists for today's word — never before,
+      // so the reflection is a reward for having written, not a preview.
+      const lastYearMemories = await loadAnnualReflection(prompts, memories, prompt.word, prompt.id)
       set((state) => ({
         todaysMemories: [...state.todaysMemories, created.memory],
+        lastYearMemories,
         draft: '',
         draftApproxAge: '',
         draftApproxYear: '',
@@ -187,6 +217,7 @@ export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
         draftApproxAge: '',
         draftApproxYear: '',
         draftMood: undefined,
+        lastYearMemories: [],
         skipping: false,
       })
     } catch (e) {
@@ -230,6 +261,7 @@ export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
         draftApproxAge: '',
         draftApproxYear: '',
         draftMood: undefined,
+        lastYearMemories: [],
         skipping: false,
       })
     } catch (e) {

@@ -21,6 +21,7 @@ export function TodayPage() {
   const {
     prompt,
     todaysMemories,
+    lastYearMemories,
     draft,
     draftApproxAge,
     draftApproxYear,
@@ -193,6 +194,19 @@ export function TodayPage() {
             </Link>
           </p>
           {todaysMemories.map((memory) => (
+            <Card key={memory.id}>
+              <CardContent className="pt-6">
+                <p className="whitespace-pre-wrap leading-relaxed">{memory.story}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </section>
+      )}
+
+      {lastYearMemories.length > 0 && (
+        <section aria-label={t.today.reflectionSectionLabel} className="flex flex-col gap-3">
+          <p className="font-sans text-sm text-muted-foreground">{t.today.reflectionHeading}</p>
+          {lastYearMemories.map((memory) => (
             <Card key={memory.id}>
               <CardContent className="pt-6">
                 <p className="whitespace-pre-wrap leading-relaxed">{memory.story}</p>

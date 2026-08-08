@@ -50,6 +50,8 @@ export const ru: Dictionary = {
     skipWord: 'Это слово сегодня не откликается? Попробуйте другое',
     neverShowAgain: 'Больше не показывать это слово',
     chooseWordLink: 'или выберите слово сами',
+    reflectionSectionLabel: 'Год назад',
+    reflectionHeading: 'Это слово приходило и год назад —',
   },
   memories: {
     loading: 'Перелистываем страницы…',

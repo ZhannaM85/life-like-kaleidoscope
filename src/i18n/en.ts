@@ -49,6 +49,8 @@ export const en: Dictionary = {
     skipWord: "This word isn't landing today? Try another",
     neverShowAgain: 'Never show this word again',
     chooseWordLink: 'or choose a word yourself',
+    reflectionSectionLabel: 'A year ago',
+    reflectionHeading: 'This word came around about a year ago, too —',
   },
   memories: {
     loading: 'Turning the pages…',

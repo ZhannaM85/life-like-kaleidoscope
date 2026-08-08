@@ -50,6 +50,8 @@ export interface Dictionary {
     skipWord: string
     neverShowAgain: string
     chooseWordLink: string
+    reflectionSectionLabel: string
+    reflectionHeading: string
   }
   memories: {
     loading: string

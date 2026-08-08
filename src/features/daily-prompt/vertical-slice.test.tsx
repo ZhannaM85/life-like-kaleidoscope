@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, createMemoryRouter, RouterProvider } from 'react-router-dom'
+import { createMemory } from '@/domain/memory'
 import {
   createIndexedDbRepositories,
   LifeLikeKaleidoscopeDb,
@@ -21,6 +22,7 @@ beforeEach(() => {
   useDailyPromptStore.setState({
     prompt: null,
     todaysMemories: [],
+    lastYearMemories: [],
     draft: '',
     draftApproxAge: '',
     draftApproxYear: '',
@@ -364,5 +366,45 @@ describe('vertical slice: prompt → write → save → memories list', () => {
 
     const words = screen.getAllByRole('button').map((el) => el.textContent)
     expect(words).toEqual([...words].sort((a, b) => a!.localeCompare(b!, 'en-US')))
+  })
+
+  it("reveals last year's memory for the same word only after today's is saved (#9)", async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <TodayPage />
+      </MemoryRouter>
+    )
+    const word = (await screen.findByRole('heading', { level: 1 })).textContent!
+
+    // Seed a same-word issuance from ~1 year ago with its own memory — the
+    // "anniversary" findAnniversaryPrompt looks for.
+    const oneYearAgo = new Date()
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
+    const anniversaryIso = oneYearAgo.toISOString()
+    const repos = getRepositories()
+    await repos.prompts.save({ id: 'anniversary-prompt', word, createdAt: anniversaryIso })
+    await repos.memories.create(
+      createMemory(
+        { promptId: 'anniversary-prompt', story: 'Last year, this word meant something else.', authoredBy: 'u1' },
+        { generateId: () => 'anniversary-memory', now: () => anniversaryIso }
+      )
+    )
+
+    // Not shown before today's own memory exists — the reveal is a reward
+    // for having written, not a preview.
+    expect(
+      screen.queryByText('Last year, this word meant something else.')
+    ).not.toBeInTheDocument()
+
+    await user.type(
+      screen.getByLabelText('A memory this word brings back'),
+      "Today's own memory, unprompted by last year's."
+    )
+    await user.click(screen.getByRole('button', { name: 'Keep this memory' }))
+
+    expect(
+      await screen.findByText('Last year, this word meant something else.')
+    ).toBeInTheDocument()
   })
 })
