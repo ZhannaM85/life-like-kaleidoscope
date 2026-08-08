@@ -183,6 +183,14 @@ Pure TypeScript. Unit-testable with no DOM. If a file here ever needs `react`, `
 | `Timeline` / `TimelineYearGroup` | `{ byYear: { year, memories }[], undated: Memory[] }`. |
 | `buildTimeline(memories)` | Groups by `approxYear` ascending ("a life reads forward", same phrase as the Markdown export's ordering); memories within a year sort by write date. Anything with no `approxYear` — whether or not it has an `approxAge` — goes to `undated`, sorted by `approxAge` ascending when given (age-known before age-unknown), then by write date. Nothing is ever dropped for lacking dates. |
 
+#### `src/domain/memory-graph/index.ts` — added in #9
+**Why it exists:** The graph's *data model*, deliberately separated from layout/rendering (`features/memory-graph/graph-layout.ts`) — the domain shouldn't know about pixels, and a future richer explorer can reuse this unchanged even if the render is rebuilt from scratch.
+
+| Export | Purpose |
+|--------|---------|
+| `GraphNode` / `GraphEdge` / `MemoryGraph` | `{ id, type, label }` nodes (`type` is `'memory' \| 'person' \| 'place' \| 'tag'`), `{ source, target }` edges by node id, and the `{ nodes, edges }` pair. Node ids are type-prefixed (`memory:<id>`) so a node's kind reads off the id alone. |
+| `buildMemoryGraph(memories, wordByPromptId, people, places, tags)` | One node per memory (even one sharing nothing yet), plus one node per person/place/tag that at least one memory actually references — an unreferenced one would just be clutter. An edge connects a memory to each of its own people/places/tags; entities are never linked to each other directly, only through the memories between them, which is the whole "shared reference" relationship for this basic pass. A memory's label falls back word → title → a 24-char story excerpt when no prompt is found. |
+
 ---
 
 ### Persistence layer (`src/infrastructure/persistence/`)
@@ -292,11 +300,16 @@ Every screen reads strings via `useLocaleStore((s) => s.dictionary)`. Deliberate
 | `src/domain/search/search.test.ts` (added in #7) | Pure `searchMemories`: blank/whitespace query → `[]`; matches story and title case-insensitively; matches the prompt word, a linked person, place, or tag via the context lookup; excludes a memory that matches nothing. |
 | `src/features/search/SearchPage.test.tsx` (added in #7) | Against fake-indexeddb: shows the "start typing" invitation before any query; matches a story substring case-insensitively; matches a linked person/place/tag; shows the calm "Nothing found" empty state for a query that matches nothing. |
 | `src/domain/timeline/timeline.test.ts` (added in #8) | Pure `buildTimeline`: groups by year ascending; multiple memories under one year ordered by write date; no-`approxYear` memories land in `undated` rather than being dropped; `undated` orders by `approxAge` ascending (age-known before age-unknown); empty input → empty groups. |
+| `src/domain/memory-graph/memory-graph.test.ts` (added in #9) | Pure `buildMemoryGraph`: a node per memory even with no shared references; label falls back word → title → story excerpt; a memory's people/places/tags each get a node and an edge; an unreferenced person/place/tag is omitted; a hub shared by two memories is one node with one edge per memory; empty input → empty graph. |
+| `src/features/memory-graph/graph-layout.test.ts` (added in #9) | Pure `layoutMemoryGraph`: every node positioned exactly once with finite in-bounds coordinates; deterministic for the same graph; handles an empty graph; hub nodes sit closer to center than memory nodes (inner vs. outer ring). |
+| `src/features/memory-graph/GraphPage.test.tsx` (added in #9) | Against fake-indexeddb: the calm empty state before any memories exist; a memory with a shared person and place renders 3 circles + 2 lines with a populated `<title>`; a memory sharing nothing renders 1 circle and 0 lines. |
 | `src/features/memory-entry/MemoriesPage.test.tsx` (added in #8) | Against fake-indexeddb: defaults to the list view; the Timeline toggle renders year headings in ascending order plus an "Undated" section, with the older year's memory appearing before the newer year's in document order; toggling back to List removes the year headings. |
 | `daily-prompt/vertical-slice.test.tsx` | The end-to-end slice as a test: word appears → type → save → echoed on Today → listed on Memories, against real stores + fake-indexeddb. Also regression tests for the StrictMode double-load race and the duplicate-prompt healing path, (since #25) the Today quick-entry approx age/year toggle: fields stay collapsed until asked for, a valid guess round-trips onto the saved `Memory`, and an out-of-range value blocks saving via the same inline error as the full form, and (since #26) the mood chips: tap to select/clear with `aria-pressed`, a tapped chip round-trips onto the saved `Memory`, and saving with no chip tapped leaves `mood` undefined. Since #27: skip swaps in a different word and "never show again" only appears after that skip; blocking issues another replacement and the word lands in `blockedWords`; both links disappear once a memory exists for today. Since #31: opening the gallery and picking a word (via a real `createMemoryRouter`, `/` ↔ `/today/words`) makes it today's word and returns to `/`; the gallery lists the effective pool alphabetically and excludes a blocked word; the "…or choose a word yourself" link disappears once a memory exists for today, same rule as skip. |
 | `export/ExportPage.tsx` (real since #11) | Three calm cards — JSON backup (the lossless restore file), Markdown (readable, oldest first), PDF (opens the browser print dialog on the printable document; "Save as PDF" lives there). Collects a fresh `BackupFile` on each click via `getRepositories()`; per-format busy labels, a `role="alert"` message on failure or when a popup blocker eats the print window. No store — export is a one-shot action with no session state worth keeping. |
 | `export/download.ts` | The browser-only delivery half, deliberately outside `domain/`: `downloadTextFile` (object URL + anchor click) and `openPrintDialog` (`window.open` → write → `print()`, returning `false` when popup-blocked so the page can explain). |
 | `export/ImportBackupCard.tsx` (added in #16) | The read-it-back half of the JSON backup, a fourth card on the Export page. Two steps on purpose: choosing a file only parses/validates and reports what it holds ("nothing has been written yet"); restore runs only after an explicit confirm. Parse/restore errors surface verbatim in a `role="alert"` — they're written for the user in `restore.ts`. Success links to `/memories`. |
+| `memory-graph/graph-layout.ts` (added in #9) | `layoutMemoryGraph(graph)` — a deterministic two-ring layout: shared people/places/tags (the "hubs") on an inner ring (radius 140), memories on an outer ring (radius 260), evenly spaced by angle, no physics simulation. Kept in `features/` (not `domain/`) because it's a presentation concern — pixel positions, not graph structure. |
+| `memory-graph/GraphPage.tsx` (real since #9) | `/graph` — a static, **non-interactive** SVG render of `layoutMemoryGraph`'s output (no store; loads memories/prompts/people/places/tags once via `getRepositories()`, same "no session state worth sharing" pattern as `SearchPage.tsx`/`ExportPage.tsx`). Memory nodes are small filled dots, hub nodes larger outlined circles — shape/size distinguishes them, never color, per the calm-visual-language brief. Each node carries an SVG `<title>` (native hover tooltip) with its full label, since the visible text truncates past 18 characters. Calm `EmptyState` when there are no memories yet. Rich interaction (zoom, drag, click-through to a memory) is explicitly deferred by the issue to a later milestone. |
 | `search/SearchPage.tsx` (real since #7) | A single query box filters the full local archive live as you type, across the memory's prompt word, title, story, and its linked people/place/tag names. No store — the page loads memories plus the four name/label lookups once via `getRepositories()` directly (same "no session state worth sharing" reasoning as `ExportPage.tsx`) and re-filters in a `useMemo` on every keystroke; a blank query shows an invitation to start typing rather than the whole archive, so "nothing typed yet" and "typed and found nothing" read differently. Result cards reuse `MemoriesPage.tsx`'s layout (word, date, 3-line story excerpt) for a familiar shape. |
 | Other `…Page.tsx` files | Still placeholders for their epics. |
 
@@ -369,7 +382,7 @@ shadcn-style primitives, hand-written (new-york style, React 19 ref-as-prop, no 
 | `src/domain/prompt/words.test.ts` | Added in #18. Both pools: no case-insensitive duplicates, no blank entries, larger than the 120-day window; the Russian pool is actually Cyrillic; `getWordPool` mapping. Since #34: `wordBelongsToLocale` — true for a word in that locale's curated pool, true for any custom word regardless of locale, false for a word drawn from the other locale entirely. |
 | `src/stores/daily-prompt-locale.test.ts` | Added in #18. Against fake-indexeddb: a Russian locale draws today's word from the Russian pool. Since #34 (superseding the original #18 case): a mid-day language switch *regenerates* today's word from the new locale's pool on reload while nothing has been written yet (the original prompt survives in history, marked `skipped`), but stays frozen across a switch once a memory exists for it. |
 
-Test stack: Vitest + jsdom + `fake-indexeddb` (dev dependency). 179 tests as of #8.
+Test stack: Vitest + jsdom + `fake-indexeddb` (dev dependency). 192 tests as of #9.
 
 **Browser verification:** `playwright-core` (dev dependency, added with #3) drives the built app in the system's Edge/Chrome (`channel:` launch — no browser binaries downloaded). Used for per-epic runtime verification: viewport checks at 390×844 and 1280×800, favicon/response checks, screenshots.
 
@@ -383,6 +396,7 @@ Test stack: Vitest + jsdom + `fake-indexeddb` (dev dependency). 179 tests as of 
 | Tailwind CSS v4 (`@tailwindcss/vite`) | Theme tokens in `src/index.css` (`@theme` / `@theme inline`). |
 | Path alias | `@/ → src/` (vite.config.ts, vitest.config.ts, tsconfig.app.json). |
 | Scripts | `dev`, `build` (tsc + vite), `test` / `test:watch` / `test:coverage`, `lint` (oxlint), `format` (prettier), `type-check`. |
+| Vitest `testTimeout: 15000` (raised from the 5000ms default, added around #9) | The full suite's form-heavy integration tests (many `userEvent.type` calls against `fake-indexeddb`) occasionally crossed the default under parallel-run system load — not stuck, just genuinely slower than 5s in that condition. |
 
 ---
 
@@ -411,9 +425,10 @@ flowchart LR
         PHOTOS["#6 Epic 5 — Photos"]
         SEARCH["#7 Epic 6 — Search"]
         TIMELINE["#8 Epic 7 — Timeline"]
+        GRAPH["#9 Epic 8 — Memory graph (basic)"]
     end
     subgraph Next ["⏭ Next"]
-        GRAPH["#9 Epic 8 — Memory graph (basic) (Tier 5)"]
+        REFLECT["#10 Epic 9 — Annual reflection (Tier 5)"]
     end
     Done --> Next
 ```

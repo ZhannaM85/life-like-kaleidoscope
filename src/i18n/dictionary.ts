@@ -204,6 +204,11 @@ export interface Dictionary {
   }
   graphPage: {
     title: string
+    description: string
+    loading: string
+    errorLoading: (error: string) => string
+    emptyTitle: string
+    emptyDescription: string
   }
   wordGallery: {
     title: string

@@ -7,6 +7,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    // Default 5000ms is too tight for the full suite under parallel load —
+    // form-heavy integration tests (many userEvent.type calls against
+    // fake-indexeddb) occasionally cross it, not because they're stuck.
+    testTimeout: 15000,
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}', 'test/**/*.{test,spec}.{ts,tsx}'],
     coverage: {

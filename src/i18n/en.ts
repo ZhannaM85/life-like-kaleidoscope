@@ -221,6 +221,12 @@ export const en: Dictionary = {
   },
   graphPage: {
     title: 'Memory Graph',
+    description: 'How your memories connect through the people, places, and tags they share.',
+    loading: 'Building your graph…',
+    errorLoading: (error) => `Something went wrong building your graph. ${error}`,
+    emptyTitle: 'Nothing to graph yet',
+    emptyDescription:
+      'Once a few memories share a person, place, or tag, the connections will appear here.',
   },
   wordGallery: {
     title: 'Word gallery',

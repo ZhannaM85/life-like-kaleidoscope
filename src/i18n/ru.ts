@@ -222,6 +222,12 @@ export const ru: Dictionary = {
   },
   graphPage: {
     title: 'Граф памяти',
+    description: 'Как связаны ваши воспоминания через общих людей, места и теги.',
+    loading: 'Строим граф…',
+    errorLoading: (error) => `Не получилось построить граф. ${error}`,
+    emptyTitle: 'Пока нечего показать',
+    emptyDescription:
+      'Как только несколько воспоминаний разделят человека, место или тег, здесь появятся связи.',
   },
   wordGallery: {
     title: 'Галерея слов',
