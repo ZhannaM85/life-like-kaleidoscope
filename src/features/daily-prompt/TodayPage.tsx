@@ -22,6 +22,7 @@ export function TodayPage() {
     prompt,
     todaysMemories,
     lastYearMemories,
+    randomMemory,
     draft,
     draftApproxAge,
     draftApproxYear,
@@ -213,6 +214,23 @@ export function TodayPage() {
               </CardContent>
             </Card>
           ))}
+        </section>
+      )}
+
+      {randomMemory && (
+        <section aria-label={t.today.onThisDaySectionLabel} className="flex flex-col gap-3">
+          <p className="font-sans text-sm text-muted-foreground">
+            {randomMemory.onThisDay
+              ? t.today.onThisDayHeading(
+                  new Date().getFullYear() - new Date(randomMemory.memory.createdAt).getFullYear()
+                )
+              : t.today.randomMemoryHeading}
+          </p>
+          <Card>
+            <CardContent className="pt-6">
+              <p className="whitespace-pre-wrap leading-relaxed">{randomMemory.memory.story}</p>
+            </CardContent>
+          </Card>
         </section>
       )}
     </div>

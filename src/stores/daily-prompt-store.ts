@@ -13,6 +13,7 @@ import {
 import { createMemory } from '@/domain/memory'
 import { ensureUserProfile } from '@/domain/user'
 import { findAnniversaryPrompt } from '@/domain/annual-reflection'
+import { pickRandomMemory, type RandomMemoryPick } from '@/domain/random-memory'
 import { defaultGenerateId, nowIso } from '@/domain/shared'
 import { intInRangeError, optionalNumber } from '@/features/memory-entry/memory-form'
 import { getRepositories } from './repositories'
@@ -37,6 +38,19 @@ async function loadAnnualReflection(
 }
 
 /**
+ * "On this day" / a random memory to revisit (#10), also only surfaced once
+ * today's own memory exists. `excludeIds` keeps this from re-showing
+ * whatever the annual-reflection callback (#9) already surfaced above it.
+ */
+async function loadRandomMemory(
+  memories: MemoryRepository,
+  excludeIds: ReadonlySet<string>
+): Promise<RandomMemoryPick | null> {
+  const all = await memories.getAll()
+  return pickRandomMemory(all, new Date(), excludeIds) ?? null
+}
+
+/**
  * The active locale's curated pool plus "Your words" (#28), minus anything
  * blocked (#27) — the same effective pool both the daily draw and the word
  * gallery (#31) work from.
@@ -54,6 +68,8 @@ interface DailyPromptState {
   todaysMemories: Memory[]
   /** Last year's memories for this same word (#9) — populated only once `todaysMemories` is non-empty. */
   lastYearMemories: Memory[]
+  /** "On this day" / random memory to revisit (#10) — same reveal-after-writing gate as #9. */
+  randomMemory: RandomMemoryPick | null
   draft: string
   /** Optional, quiet "when was this, roughly?" guesses (#25) — raw strings, same shape as the full form. */
   draftApproxAge: string
@@ -82,6 +98,7 @@ export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
   prompt: null,
   todaysMemories: [],
   lastYearMemories: [],
+  randomMemory: null,
   draft: '',
   draftApproxAge: '',
   draftApproxYear: '',
@@ -136,8 +153,12 @@ export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
         todaysMemories.length > 0
           ? await loadAnnualReflection(prompts, memories, prompt.word, prompt.id)
           : []
+      const randomMemory =
+        todaysMemories.length > 0
+          ? await loadRandomMemory(memories, new Set(lastYearMemories.map((m) => m.id)))
+          : null
 
-      set({ prompt, todaysMemories, lastYearMemories, status: 'ready' })
+      set({ prompt, todaysMemories, lastYearMemories, randomMemory, status: 'ready' })
     } catch (e) {
       set({ status: 'error', error: e instanceof Error ? e.message : String(e) })
     }
@@ -183,11 +204,13 @@ export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
       )
       await memories.create(created)
       // Only surfaced once a memory exists for today's word — never before,
-      // so the reflection is a reward for having written, not a preview.
+      // so both callbacks are a reward for having written, not a preview.
       const lastYearMemories = await loadAnnualReflection(prompts, memories, prompt.word, prompt.id)
+      const randomMemory = await loadRandomMemory(memories, new Set(lastYearMemories.map((m) => m.id)))
       set((state) => ({
         todaysMemories: [...state.todaysMemories, created.memory],
         lastYearMemories,
+        randomMemory,
         draft: '',
         draftApproxAge: '',
         draftApproxYear: '',
@@ -218,6 +241,7 @@ export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
         draftApproxYear: '',
         draftMood: undefined,
         lastYearMemories: [],
+        randomMemory: null,
         skipping: false,
       })
     } catch (e) {
@@ -262,6 +286,7 @@ export const useDailyPromptStore = create<DailyPromptState>()((set, get) => ({
         draftApproxYear: '',
         draftMood: undefined,
         lastYearMemories: [],
+        randomMemory: null,
         skipping: false,
       })
     } catch (e) {

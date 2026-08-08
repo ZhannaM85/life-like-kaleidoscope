@@ -52,6 +52,9 @@ export interface Dictionary {
     chooseWordLink: string
     reflectionSectionLabel: string
     reflectionHeading: string
+    onThisDaySectionLabel: string
+    onThisDayHeading: (years: number) => string
+    randomMemoryHeading: string
   }
   memories: {
     loading: string

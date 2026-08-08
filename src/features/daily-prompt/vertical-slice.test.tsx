@@ -407,4 +407,39 @@ describe('vertical slice: prompt → write → save → memories list', () => {
       await screen.findByText('Last year, this word meant something else.')
     ).toBeInTheDocument()
   })
+
+  it('reveals an "on this day" memory from a past year only after saving today\'s (#13)', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <TodayPage />
+      </MemoryRouter>
+    )
+    await screen.findByRole('heading', { level: 1 })
+
+    // Same calendar month/day, three years ago, under an unrelated word —
+    // onThisDayMemories only cares about the date, not the prompt.
+    const onThisDay = new Date()
+    onThisDay.setFullYear(onThisDay.getFullYear() - 3)
+    const onThisDayIso = onThisDay.toISOString()
+    const repos = getRepositories()
+    await repos.prompts.save({ id: 'on-this-day-prompt', word: 'Lantern', createdAt: onThisDayIso })
+    await repos.memories.create(
+      createMemory(
+        { promptId: 'on-this-day-prompt', story: 'Three years ago on this very day.', authoredBy: 'u1' },
+        { generateId: () => 'on-this-day-memory', now: () => onThisDayIso }
+      )
+    )
+
+    expect(screen.queryByText('Three years ago on this very day.')).not.toBeInTheDocument()
+
+    await user.type(
+      screen.getByLabelText('A memory this word brings back'),
+      "Today's memory, written first."
+    )
+    await user.click(screen.getByRole('button', { name: 'Keep this memory' }))
+
+    expect(await screen.findByText('Three years ago on this very day.')).toBeInTheDocument()
+    expect(screen.getByText('3 years ago today, you wrote —')).toBeInTheDocument()
+  })
 })

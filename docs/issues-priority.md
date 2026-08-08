@@ -64,7 +64,7 @@ _Any order from here, but keep each epic its own reviewable unit of work. Sugges
 | ~~[#8](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/8)~~ | ~~Epic 7 — Timeline~~ | Done ✓ — `buildTimeline` (domain/timeline) groups by `approxYear`; a List/Timeline toggle on `/memories` (the brief's routing table treats them as one screen); undated memories get their own section, never dropped |
 | ~~[#9](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/9)~~ | ~~Epic 8 — Memory graph (basic)~~ | Done ✓ — `buildMemoryGraph` (domain/memory-graph) + a two-ring static SVG render (`layoutMemoryGraph`, no physics sim); rich interactive explorer deferred as scoped |
 | ~~[#10](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/10)~~ | ~~Epic 9 — Annual reflection~~ | Done ✓ — `findAnniversaryPrompt` (domain/annual-reflection) detects a same-word issuance ~1 year ago (±14 days); Today reveals it only once today's own memory is saved, never as a preview |
-| [#13](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/13) | Epic 10 — Random memory | "On this day N years ago" + random fallback |
+| ~~[#13](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/13)~~ | ~~Epic 10 — Random memory~~ | Done ✓ — `pickRandomMemory` (domain/random-memory): "on this day" (matches `createdAt` month/day across years) when the archive has one, else a deterministic-per-day random fallback; same reveal-after-writing gate as #9, never repeats a memory #9 already surfaced |
 
 ---
 

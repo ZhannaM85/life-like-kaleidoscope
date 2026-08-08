@@ -51,6 +51,10 @@ export const en: Dictionary = {
     chooseWordLink: 'or choose a word yourself',
     reflectionSectionLabel: 'A year ago',
     reflectionHeading: 'This word came around about a year ago, too —',
+    onThisDaySectionLabel: 'On this day',
+    onThisDayHeading: (years) =>
+      `${years} ${pluralEn(years, { one: 'year', many: 'years' })} ago today, you wrote —`,
+    randomMemoryHeading: 'From your archive —',
   },
   memories: {
     loading: 'Turning the pages…',

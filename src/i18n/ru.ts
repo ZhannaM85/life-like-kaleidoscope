@@ -52,6 +52,10 @@ export const ru: Dictionary = {
     chooseWordLink: 'или выберите слово сами',
     reflectionSectionLabel: 'Год назад',
     reflectionHeading: 'Это слово приходило и год назад —',
+    onThisDaySectionLabel: 'В этот день',
+    onThisDayHeading: (years) =>
+      `${years} ${pluralRu(years, { one: 'год', few: 'года', many: 'лет' })} назад в этот день вы написали —`,
+    randomMemoryHeading: 'Из вашего архива —',
   },
   memories: {
     loading: 'Перелистываем страницы…',
