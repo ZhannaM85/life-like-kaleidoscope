@@ -189,6 +189,14 @@ export interface Dictionary {
   }
   searchPage: {
     title: string
+    description: string
+    inputLabel: string
+    placeholder: string
+    prompt: string
+    emptyTitle: string
+    emptyDescription: string
+    loading: string
+    errorLoading: (error: string) => string
   }
   graphPage: {
     title: string

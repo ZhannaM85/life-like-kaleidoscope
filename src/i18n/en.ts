@@ -206,6 +206,14 @@ export const en: Dictionary = {
   },
   searchPage: {
     title: 'Search',
+    description: 'Find a memory by its word, story, people, places, or tags.',
+    inputLabel: 'Search',
+    placeholder: 'Search your memories…',
+    prompt: 'Start typing to search across every word, story, person, place, and tag.',
+    emptyTitle: 'Nothing found',
+    emptyDescription: 'Try a different word — search looks across people, places, and tags too.',
+    loading: 'Gathering your memories…',
+    errorLoading: (error) => `Something went wrong loading your memories. ${error}`,
   },
   graphPage: {
     title: 'Memory Graph',

@@ -167,6 +167,14 @@ Pure TypeScript. Unit-testable with no DOM. If a file here ever needs `react`, `
 | `restoreBackup(backup, target)` (added in #16) | MVP merge strategy: restore only into an empty app (id-collision skip/overwrite is a follow-up). Refuses with a clear message when user data exists; otherwise hands the backup to the target. |
 | `base64ToBytes(base64)` (added in #16) | Inverse of the export's photo-byte encoding — rebuilds the blob bytes on restore. |
 
+#### `src/domain/search/index.ts` — added in #7
+**Why it exists:** Free-text search over names/labels isn't something the `memories` table's multi-entry indexes (`*peopleIds`/`*placeIds`/`*tagIds`) can do directly — those support exact-id lookups, not substring text matching — so this is a pure, storage-free filter over an already-loaded set, kept in `domain/` so it's unit-testable without a browser.
+
+| Export | Purpose |
+|--------|---------|
+| `SearchContext` | The id→name/label lookups a search needs: `wordByPromptId`, `nameByPersonId`, `nameByPlaceId`, `labelByTagId`. Built once per search session by the page, not by this module. |
+| `searchMemories(memories, query, ctx)` | Case-insensitive substring match across a memory's prompt word, title, story, and its linked people/place/tag names. A blank (or all-whitespace) query returns `[]`, not the whole archive — deliberately, so the page can distinguish "nothing typed yet" from "typed and found nothing". |
+
 ---
 
 ### Persistence layer (`src/infrastructure/persistence/`)
@@ -273,10 +281,13 @@ Every screen reads strings via `useLocaleStore((s) => s.dictionary)`. Deliberate
 | `version-history/VersionHistoryPage.tsx` (added in #5) | `/memories/:id/history` — read-only cards, newest first, each version's snapshot as written, the current one marked. Nothing on this page can change or remove anything, which is the point. |
 | `memory-entry/memory-form.test.ts` / `memory-entry/memory-crud.test.tsx` (added in #5) | Unit tests for the form logic (schema, name parsing, entity reuse) and a routed integration suite against fake-indexeddb: create through the full form → detail rows, story-required validation, edit → two versions in history with the old text kept, delete with confirmation removing the whole history, and not-found states. Since #26, the create flow also taps a mood chip and asserts it lands on the detail page's Mood row. Since #6: `URL.createObjectURL`/`revokeObjectURL` are stubbed (jsdom has neither, same pattern as `ExportPage.test.tsx`); create-with-photo shows a preview in the form and the same photo on the detail page afterward; edit removes the seeded photo and adds a new one, landing on exactly one `Photo` row that isn't the original id. |
 | `photos/photo-changes.test.ts` (added in #6) | `allocatePhotos` assigns a generated id per file (and is a no-op on an empty list); `persistPhotos` saves each allocation under the given memory id with `blobRef === id`, against a hand-rolled fake `PhotoRepository`. |
+| `src/domain/search/search.test.ts` (added in #7) | Pure `searchMemories`: blank/whitespace query → `[]`; matches story and title case-insensitively; matches the prompt word, a linked person, place, or tag via the context lookup; excludes a memory that matches nothing. |
+| `src/features/search/SearchPage.test.tsx` (added in #7) | Against fake-indexeddb: shows the "start typing" invitation before any query; matches a story substring case-insensitively; matches a linked person/place/tag; shows the calm "Nothing found" empty state for a query that matches nothing. |
 | `daily-prompt/vertical-slice.test.tsx` | The end-to-end slice as a test: word appears → type → save → echoed on Today → listed on Memories, against real stores + fake-indexeddb. Also regression tests for the StrictMode double-load race and the duplicate-prompt healing path, (since #25) the Today quick-entry approx age/year toggle: fields stay collapsed until asked for, a valid guess round-trips onto the saved `Memory`, and an out-of-range value blocks saving via the same inline error as the full form, and (since #26) the mood chips: tap to select/clear with `aria-pressed`, a tapped chip round-trips onto the saved `Memory`, and saving with no chip tapped leaves `mood` undefined. Since #27: skip swaps in a different word and "never show again" only appears after that skip; blocking issues another replacement and the word lands in `blockedWords`; both links disappear once a memory exists for today. Since #31: opening the gallery and picking a word (via a real `createMemoryRouter`, `/` ↔ `/today/words`) makes it today's word and returns to `/`; the gallery lists the effective pool alphabetically and excludes a blocked word; the "…or choose a word yourself" link disappears once a memory exists for today, same rule as skip. |
 | `export/ExportPage.tsx` (real since #11) | Three calm cards — JSON backup (the lossless restore file), Markdown (readable, oldest first), PDF (opens the browser print dialog on the printable document; "Save as PDF" lives there). Collects a fresh `BackupFile` on each click via `getRepositories()`; per-format busy labels, a `role="alert"` message on failure or when a popup blocker eats the print window. No store — export is a one-shot action with no session state worth keeping. |
 | `export/download.ts` | The browser-only delivery half, deliberately outside `domain/`: `downloadTextFile` (object URL + anchor click) and `openPrintDialog` (`window.open` → write → `print()`, returning `false` when popup-blocked so the page can explain). |
 | `export/ImportBackupCard.tsx` (added in #16) | The read-it-back half of the JSON backup, a fourth card on the Export page. Two steps on purpose: choosing a file only parses/validates and reports what it holds ("nothing has been written yet"); restore runs only after an explicit confirm. Parse/restore errors surface verbatim in a `role="alert"` — they're written for the user in `restore.ts`. Success links to `/memories`. |
+| `search/SearchPage.tsx` (real since #7) | A single query box filters the full local archive live as you type, across the memory's prompt word, title, story, and its linked people/place/tag names. No store — the page loads memories plus the four name/label lookups once via `getRepositories()` directly (same "no session state worth sharing" reasoning as `ExportPage.tsx`) and re-filters in a `useMemo` on every keystroke; a blank query shows an invitation to start typing rather than the whole archive, so "nothing typed yet" and "typed and found nothing" read differently. Result cards reuse `MemoriesPage.tsx`'s layout (word, date, 3-line story excerpt) for a familiar shape. |
 | Other `…Page.tsx` files | Still placeholders for their epics. |
 
 ---
@@ -348,7 +359,7 @@ shadcn-style primitives, hand-written (new-york style, React 19 ref-as-prop, no 
 | `src/domain/prompt/words.test.ts` | Added in #18. Both pools: no case-insensitive duplicates, no blank entries, larger than the 120-day window; the Russian pool is actually Cyrillic; `getWordPool` mapping. Since #34: `wordBelongsToLocale` — true for a word in that locale's curated pool, true for any custom word regardless of locale, false for a word drawn from the other locale entirely. |
 | `src/stores/daily-prompt-locale.test.ts` | Added in #18. Against fake-indexeddb: a Russian locale draws today's word from the Russian pool. Since #34 (superseding the original #18 case): a mid-day language switch *regenerates* today's word from the new locale's pool on reload while nothing has been written yet (the original prompt survives in history, marked `skipped`), but stays frozen across a switch once a memory exists for it. |
 
-Test stack: Vitest + jsdom + `fake-indexeddb` (dev dependency). 160 tests as of #6.
+Test stack: Vitest + jsdom + `fake-indexeddb` (dev dependency). 171 tests as of #7.
 
 **Browser verification:** `playwright-core` (dev dependency, added with #3) drives the built app in the system's Edge/Chrome (`channel:` launch — no browser binaries downloaded). Used for per-epic runtime verification: viewport checks at 390×844 and 1280×800, favicon/response checks, screenshots.
 
@@ -388,9 +399,10 @@ flowchart LR
         GAL["#31 Word gallery — deliberately pick today's word"]
         RELOC["#34 Regenerate today's word on language switch, pre-memory"]
         PHOTOS["#6 Epic 5 — Photos"]
+        SEARCH["#7 Epic 6 — Search"]
     end
     subgraph Next ["⏭ Next"]
-        SEARCH["#7 Epic 6 — Search (Tier 5)"]
+        TIMELINE["#8 Epic 7 — Timeline (Tier 5)"]
     end
     Done --> Next
 ```
