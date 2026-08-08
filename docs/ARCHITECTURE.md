@@ -373,7 +373,19 @@ shadcn-style primitives, hand-written (new-york style, React 19 ref-as-prop, no 
 |------|---------|
 | `lib/utils.ts` | `cn()` — `clsx` + `tailwind-merge`, the standard shadcn class-merging helper. |
 
-`src/index.css` holds the theme: warm paper palette (oklch ivory/ink CSS variables mapped to Tailwind v4 `@theme inline` tokens, from Epic 0) plus, added in #3, `--font-serif` (Charter/Sitka/Cambria/Georgia stack — body default) and `--font-sans` (warm system sans for UI chrome). System stacks only — no webfont downloads, consistent with privacy-first.
+`src/index.css` holds the theme: warm paper palette (oklch ivory/ink CSS variables mapped to Tailwind v4 `@theme inline` tokens, from Epic 0) plus, added in #3, `--font-serif` (Charter/Sitka/Cambria/Georgia stack — body default) and `--font-sans` (warm system sans for UI chrome). System stacks only — no webfont downloads, consistent with privacy-first. Since #12: `--destructive` darkened (`oklch(0.6 0.2 15)` → `oklch(0.55 0.2 15)`) — `primary-foreground` text on it was 4.19:1, under the WCAG AA 4.5:1 normal-text minimum. `--input` split off from `--border` (`oklch(0.88 0.01 78)` → `oklch(0.62 0.01 78)`, same hue) so form-control outlines clear the separate 3:1 non-text/UI-component minimum (WCAG 1.4.11) — `--border` itself stays at the original subtle value for decorative dividers/card outlines, which aren't held to that criterion.
+
+---
+
+### Accessibility & responsive QA pass (#12)
+
+**Why here, not deferred to the end:** most of this was already true by the time #12 ran — every interactive primitive in `shared/ui/` was built with `focus-visible:ring-2` and proper label association from Epic 2 onward (§ Design system above), and the mobile shell's bottom tab bar was verified at 390×844 back in #14/#3. This pass is the audit that confirmed it, not the pass that built it.
+
+**Method:**
+- **Automated:** [axe-core](https://github.com/dequelabs/axe-core) (loaded via CDN into a real browser page, not installed as a project dependency — a testing-time tool, not shipped code) run against the `wcag2a`/`wcag2aa`/`wcag21a`/`wcag21aa` rule sets across all 11 real routes (Today, Word gallery, Memories list+timeline, Memory detail/edit/new, Version history, Search, Graph, Export, Settings) plus the not-found page, at 3 viewports (390×844, 768×1024, 1280×800), against a seeded archive (photo, people/places/tags, mood, approx age/year) so content-bearing states were audited, not just empty ones — **0 violations**.
+- **Keyboard:** a full Tab trace on every route (desktop viewport) confirmed a visible focus indicator on every stop, a logical tab order (global nav, then page content top-to-bottom), and no keyboard traps — including the word gallery's ~231-word list, which tabs through completely rather than looping or trapping focus.
+- **Color contrast:** axe's automated `color-contrast` rule doesn't reliably cover non-text UI boundaries (WCAG 1.4.11) and can't check state-gated elements it never renders (e.g. the destructive "Delete" button only exists after clicking "Delete this memory" first) — so every theme token pair was also checked by direct oklch→sRGB relative-luminance computation. This caught the two real findings above that the automated pass missed; everything else (body text, muted text on every background it appears on, button label pairs, the focus ring itself) already cleared AA with comfortable margin (5:1–18:1).
+- **Responsive:** the same 3-viewport sweep checked `scrollWidth` vs `clientWidth` on every route for horizontal overflow (none found), plus a manual screenshot review of content-heavy pages (memory detail with a photo, the graph) at mobile and tablet widths.
 
 ---
 
@@ -446,11 +458,8 @@ flowchart LR
         GRAPH["#9 Epic 8 — Memory graph (basic)"]
         REFLECT["#10 Epic 9 — Annual reflection"]
         RANDOM["#13 Epic 10 — Random memory"]
+        A11Y["#12 Epic 12 — Accessibility & responsive QA pass"]
     end
-    subgraph Next ["⏭ Next"]
-        A11Y["#12 Epic 12 — Accessibility & responsive QA pass (Tier 6)"]
-    end
-    Done --> Next
 ```
 
-See `docs/issues-priority.md` for the full ordered queue.
+Every issue tracked in `docs/issues-priority.md` is closed as of #12 — no open queue remains. New work starts with a fresh issue.

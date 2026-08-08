@@ -73,4 +73,8 @@ _Final sweep, but apply accessibility incrementally as each feature is built —
 
 | # | Issue | Notes |
 |---|-------|-------|
-| [#12](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/12) | Epic 12 — Accessibility & responsive QA pass | Keyboard nav, WCAG AA contrast audit, responsive check; PDF export (#11 leftover) fits here too |
+| ~~[#12](https://github.com/ZhannaM85/life-like-kaleidoscope/issues/12)~~ | ~~Epic 12 — Accessibility & responsive QA pass~~ | Done ✓ — axe-core swept all 11 routes × 3 viewports (0 violations); full keyboard trace (visible focus everywhere, no traps); manual oklch contrast math caught 2 real AA gaps automation missed (`--destructive` text, `--input` border), both fixed; PDF export was already shipped with #11, no leftover |
+
+---
+
+_All issues closed as of #12 — see `docs/ARCHITECTURE.md`'s Status section._

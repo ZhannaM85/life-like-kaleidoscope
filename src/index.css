@@ -54,9 +54,14 @@
     --muted-foreground: oklch(0.52 0.012 70);
     --accent: oklch(0.87 0.022 80);
     --accent-foreground: oklch(0.18 0.012 65);
-    --destructive: oklch(0.6 0.2 15);
+    /* Darkened from 0.6 for WCAG AA (#12): primary-foreground text on this
+       background was 4.19:1, just under the 4.5:1 normal-text minimum. */
+    --destructive: oklch(0.55 0.2 15);
     --border: oklch(0.88 0.01 78);
-    --input: oklch(0.88 0.01 78);
+    /* Separate from --border (kept subtle for decorative dividers): input
+       outlines are a UI component boundary needing 3:1 against the
+       background (WCAG 1.4.11), which 0.88 only reached at 1.38:1 (#12). */
+    --input: oklch(0.62 0.01 78);
     --ring: oklch(0.55 0.018 70);
   }
 
