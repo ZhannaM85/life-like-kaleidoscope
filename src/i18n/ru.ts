@@ -59,6 +59,10 @@ export const ru: Dictionary = {
     title: 'Воспоминания',
     description: 'Всё, что вы сохранили, — сначала самое новое.',
     writeAction: 'Написать воспоминание',
+    viewToggleLabel: 'Вид',
+    viewList: 'Список',
+    viewTimeline: 'Хронология',
+    undatedHeading: 'Без даты',
   },
   memoryForm: {
     titleLabel: 'Заголовок',

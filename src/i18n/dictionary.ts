@@ -59,6 +59,10 @@ export interface Dictionary {
     title: string
     description: string
     writeAction: string
+    viewToggleLabel: string
+    viewList: string
+    viewTimeline: string
+    undatedHeading: string
   }
   memoryForm: {
     titleLabel: string

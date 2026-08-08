@@ -58,6 +58,10 @@ export const en: Dictionary = {
     title: 'Memories',
     description: 'Everything you have kept, newest first.',
     writeAction: 'Write a memory',
+    viewToggleLabel: 'View',
+    viewList: 'List',
+    viewTimeline: 'Timeline',
+    undatedHeading: 'Undated',
   },
   memoryForm: {
     titleLabel: 'Title',
